@@ -12,7 +12,16 @@ import (
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		// If encoding fails, log the error and write a generic error message
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
+// writeError writes an error message in JSON format to the response writer.
+func writeError(w http.ResponseWriter, status int, message string) {
+	response := map[string]string{"error": message}
+	writeJSON(w, status, response)
 }
 
 // parseObjectID parses a string into a MongoDB ObjectID or returns an error.

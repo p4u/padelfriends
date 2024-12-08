@@ -15,10 +15,6 @@ import (
 	"github.com/p4u/padelfriends/handlers"
 	"github.com/p4u/padelfriends/router"
 	"github.com/p4u/padelfriends/services"
-
-	"github.com/maxence-charriere/go-app/v10/pkg/app"
-
-	_ "github.com/p4u/padelfriends/ui"
 )
 
 func main() {
@@ -46,17 +42,8 @@ func main() {
 	matchHandler := &handlers.MatchHandler{GroupService: groupService, MatchService: matchService}
 	statsHandler := &handlers.StatsHandler{GroupService: groupService, StatsService: statsService}
 
-	// Setup go-app handler
-	h := &app.Handler{
-		Title:       "Padel Friends",
-		Author:      "p4u",
-		Description: "A Padel match tracker web application",
-		//	BackgroundColor: "#ffffff",
-		//	ThemeColor:      "#000000",
-	}
-
 	// Create router
-	r := router.New(groupHandler, playerHandler, matchHandler, statsHandler, h)
+	r := router.New(groupHandler, playerHandler, matchHandler, statsHandler)
 
 	// Start server
 	srv := &http.Server{

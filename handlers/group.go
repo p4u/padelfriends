@@ -8,11 +8,12 @@ import (
 	"github.com/p4u/padelfriends/services"
 )
 
+// GroupHandler handles group-related HTTP requests.
 type GroupHandler struct {
 	GroupService *services.GroupService
 }
 
-// POST /api/group
+// CreateGroup handles POST /api/group
 // Payload: { "name": "GroupName", "password": "secret" }
 func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
@@ -20,58 +21,78 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
 
 	if payload.Name == "" || payload.Password == "" {
-		http.Error(w, "Missing name or password", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Missing name or password")
 		return
 	}
 
 	group, err := h.GroupService.CreateGroup(r.Context(), payload.Name, payload.Password)
 	if err != nil {
-		http.Error(w, "Failed to create group: "+err.Error(), http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to create group: "+err.Error())
 		return
 	}
 
 	writeJSON(w, http.StatusCreated, group)
 }
 
-// GET /api/group/byname/{name}?password=SECRET
+// GetGroupByName handles GET /api/group/byname/{name}?password=SECRET
 // Retrieves a group by name if password is correct
-
 func (h *GroupHandler) GetGroupByName(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	if name == "" {
-		http.Error(w, "Missing group name", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Missing group name")
 		return
 	}
 
 	password := getQueryParam(r, "password")
 	if password == "" {
-		http.Error(w, "Missing password", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Missing password")
 		return
 	}
 
 	g, err := h.GroupService.GetGroupByName(r.Context(), name)
 	if err != nil {
-		http.Error(w, "Group not found", http.StatusNotFound)
+		writeError(w, http.StatusNotFound, "Group not found")
 		return
 	}
 
 	if !services.CheckPassword(password, g.PasswordHash) {
-		http.Error(w, "Invalid password", http.StatusUnauthorized)
+		writeError(w, http.StatusUnauthorized, "Invalid password")
 		return
 	}
 
 	writeJSON(w, http.StatusOK, g)
 }
 
-// Helper to extract the group name from URL if we define {name} as a route parameter.
-func (h *GroupHandler) getGroupNameFromURL(r *http.Request) string {
-	// If we define the route as /api/group/byname/{name}, we can use chi.URLParam:
-	name := r.URL.Path // or use chi.URLParam(r, "name")
-	// We'll rely on router configuration to extract name properly soon.
-	return name
+// ListGroups handles GET /api/groups?password=SECRET
+// Retrieves a list of all groups. This endpoint can be secured as needed.
+func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
+	password := r.Header.Get("X-Group-Password") // Securely retrieve password from headers
+	if password == "" {
+		writeError(w, http.StatusBadRequest, "Missing X-Group-Password header")
+		return
+	}
+
+	// Optionally, verify password here if required for listing groups
+	// For example, only allow listing if the password matches a master password
+	// This depends on your application's authentication logic
+
+	// For demonstration, assume a master password is "adminsecret"
+	masterPassword := "adminsecret"
+	if password != masterPassword {
+		writeError(w, http.StatusUnauthorized, "Invalid master password")
+		return
+	}
+
+	groups, err := h.GroupService.ListGroups(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Error listing groups: "+err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, groups)
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/maxence-charriere/go-app/v10/pkg/app"
 	"github.com/p4u/padelfriends/handlers"
 )
 
@@ -14,7 +13,6 @@ func New(
 	playerHandler *handlers.PlayerHandler,
 	matchHandler *handlers.MatchHandler,
 	statsHandler *handlers.StatsHandler,
-	appHandler *app.Handler,
 ) http.Handler {
 
 	r := chi.NewRouter()
@@ -25,6 +23,7 @@ func New(
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/group", groupHandler.CreateGroup)
 		r.Get("/group/byname/{name}", groupHandler.GetGroupByName)
+		r.Get("/groups", groupHandler.ListGroups) // **Added this line**
 
 		r.Route("/group/{id}", func(r chi.Router) {
 			r.Post("/players", playerHandler.AddPlayer)
@@ -40,10 +39,6 @@ func New(
 			w.Write([]byte("ok"))
 		})
 	})
-
-	// PWA routes (handled by go-app)
-	r.Handle("/", appHandler)
-	r.Handle("/*", appHandler)
 
 	return r
 }

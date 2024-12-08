@@ -84,7 +84,7 @@ const addPlayer = async (name: string) => {
   
   try {
     await groupApi.addPlayer(
-      currentGroup.value.id,
+      currentGroup.value.name,
       groupStore.groupPassword,
       name
     );
@@ -99,7 +99,7 @@ const createMatch = async (playerIds: string[]) => {
   
   try {
     await groupApi.createMatch(
-      currentGroup.value.id,
+      currentGroup.value.name,
       groupStore.groupPassword,
       playerIds
     );
@@ -125,7 +125,7 @@ const showSubmitScore = async (match: Match) => {
   
   try {
     await groupApi.submitResults(
-      match.group_id,
+      match.group_name,
       match.id,
       groupStore.groupPassword,
       scoreTeam1,

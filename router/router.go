@@ -22,10 +22,11 @@ func New(
 	// API routes
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/group", groupHandler.CreateGroup)
+		r.Get("/group/{name}", groupHandler.GetGroupByName)
 		r.Get("/group/byname/{name}", groupHandler.GetGroupByName)
 		r.Get("/groups", groupHandler.ListGroups)
 
-		r.Route("/group/{id}", func(r chi.Router) {
+		r.Route("/group/{name}", func(r chi.Router) {
 			r.Post("/players", playerHandler.AddPlayer)
 			r.Get("/players", playerHandler.ListPlayers)
 			r.Post("/matches", matchHandler.CreateMatch)

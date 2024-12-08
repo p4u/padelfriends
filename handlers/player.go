@@ -13,18 +13,12 @@ type PlayerHandler struct {
 	PlayerService *services.PlayerService
 }
 
-// POST /api/group/{id}/players?password=SECRET
+// POST /api/group/{name}/players?password=SECRET
 // Payload: { "name": "PlayerName" }
 func (h *PlayerHandler) AddPlayer(w http.ResponseWriter, r *http.Request) {
-	groupIDStr := chi.URLParam(r, "id")
-	groupID, err := parseObjectID(groupIDStr)
-	if err != nil {
-		http.Error(w, "Invalid group ID", http.StatusBadRequest)
-		return
-	}
-
+	groupName := chi.URLParam(r, "name")
 	// Check password
-	if !checkGroupPassword(w, r, h.GroupService, groupID) {
+	if !checkGroupPassword(w, r, h.GroupService, groupName) {
 		return
 	}
 
@@ -40,7 +34,7 @@ func (h *PlayerHandler) AddPlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	player, err := h.PlayerService.AddPlayer(r.Context(), groupID, payload.Name)
+	player, err := h.PlayerService.AddPlayer(r.Context(), groupName, payload.Name)
 	if err != nil {
 		http.Error(w, "Error adding player: "+err.Error(), http.StatusConflict)
 		return
@@ -49,21 +43,16 @@ func (h *PlayerHandler) AddPlayer(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, player)
 }
 
-// GET /api/group/{id}/players?password=SECRET
+// GET /api/group/{name}/players?password=SECRET
 func (h *PlayerHandler) ListPlayers(w http.ResponseWriter, r *http.Request) {
-	groupIDStr := chi.URLParam(r, "id")
-	groupID, err := parseObjectID(groupIDStr)
-	if err != nil {
-		http.Error(w, "Invalid group ID", http.StatusBadRequest)
-		return
-	}
+	groupName := chi.URLParam(r, "name")
 
 	// Check password
-	if !checkGroupPassword(w, r, h.GroupService, groupID) {
+	if !checkGroupPassword(w, r, h.GroupService, groupName) {
 		return
 	}
 
-	players, err := h.PlayerService.ListPlayers(r.Context(), groupID)
+	players, err := h.PlayerService.ListPlayers(r.Context(), groupName)
 	if err != nil {
 		http.Error(w, "Error listing players: "+err.Error(), http.StatusInternalServerError)
 		return

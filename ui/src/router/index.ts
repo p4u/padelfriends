@@ -11,7 +11,7 @@ export const router = createRouter({
       component: Home,
     },
     {
-      path: '/group/:id',
+      path: '/group/:name',
       name: 'group',
       component: Group,
       props: true,

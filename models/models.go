@@ -9,33 +9,32 @@ import (
 
 // Group represents a padel group context.
 type Group struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty"`
-	Name         string             `bson:"name"`
-	PasswordHash string             `bson:"password_hash"`
-	CreatedAt    time.Time          `bson:"created_at"`
+	Name         string    `bson:"name" json:"name"`
+	PasswordHash string    `bson:"password_hash" json:"-"`
+	CreatedAt    time.Time `bson:"created_at" json:"created_at"`
 }
 
 // Player represents a player within a group.
 type Player struct {
-	ID      primitive.ObjectID `bson:"_id,omitempty"`
-	GroupID primitive.ObjectID `bson:"group_id"`
-	Name    string             `bson:"name"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	GroupName string             `bson:"group_name" json:"group_name"`
+	Name      string             `bson:"name" json:"name"`
 }
 
 // Match represents a single match played in a group.
 type Match struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	GroupID   primitive.ObjectID `bson:"group_id"`
-	Timestamp time.Time          `bson:"timestamp"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	GroupName string             `bson:"group_name" json:"group_name"`
+	Timestamp time.Time          `bson:"timestamp" json:"timestamp"`
 }
 
 // MatchDetail stores the details of a match (teams, scores).
 type MatchDetail struct {
-	MatchID    primitive.ObjectID   `bson:"match_id"`
-	Team1      []primitive.ObjectID `bson:"team1"`
-	Team2      []primitive.ObjectID `bson:"team2"`
-	ScoreTeam1 int                  `bson:"score_team1"`
-	ScoreTeam2 int                  `bson:"score_team2"`
+	MatchID    primitive.ObjectID   `bson:"match_id" json:"match_id"`
+	Team1      []primitive.ObjectID `bson:"team1" json:"team1"`
+	Team2      []primitive.ObjectID `bson:"team2" json:"team2"`
+	ScoreTeam1 int                  `bson:"score_team1" json:"score_team1"`
+	ScoreTeam2 int                  `bson:"score_team2" json:"score_team2"`
 }
 
 // HashPassword hashes the given password using bcrypt.

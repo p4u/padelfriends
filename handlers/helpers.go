@@ -35,15 +35,15 @@ func getQueryParam(r *http.Request, key string) string {
 }
 
 // checkGroupPassword checks if the provided password matches the group’s password.
-func checkGroupPassword(w http.ResponseWriter, r *http.Request, groupService *services.GroupService, groupID primitive.ObjectID) bool {
+func checkGroupPassword(w http.ResponseWriter, r *http.Request, groupService *services.GroupService, groupName string) bool {
 	password := getQueryParam(r, "password")
 	if password == "" {
 		http.Error(w, "Missing password query parameter", http.StatusBadRequest)
 		return false
 	}
 
-	// Retrieve group by ID
-	g, err := groupService.GetGroupByID(r.Context(), groupID)
+	// Retrieve group by Name
+	g, err := groupService.GetGroupByName(r.Context(), groupName)
 	if err != nil {
 		http.Error(w, "Group not found or error retrieving group", http.StatusNotFound)
 		return false

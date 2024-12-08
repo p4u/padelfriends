@@ -14,17 +14,12 @@ type StatsHandler struct {
 
 // GET /api/group/{id}/statistics?password=SECRET
 func (h *StatsHandler) GetStatistics(w http.ResponseWriter, r *http.Request) {
-	groupIDStr := chi.URLParam(r, "id")
-	groupID, err := parseObjectID(groupIDStr)
-	if err != nil {
-		http.Error(w, "Invalid group ID", http.StatusBadRequest)
-		return
-	}
-	if !checkGroupPassword(w, r, h.GroupService, groupID) {
+	groupName := chi.URLParam(r, "name")
+	if !checkGroupPassword(w, r, h.GroupService, groupName) {
 		return
 	}
 
-	stats, err := h.StatsService.ComputeStats(r.Context(), groupID)
+	stats, err := h.StatsService.ComputeStats(r.Context(), groupName)
 	if err != nil {
 		http.Error(w, "Error computing stats: "+err.Error(), http.StatusInternalServerError)
 		return

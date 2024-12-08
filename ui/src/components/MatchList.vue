@@ -33,9 +33,9 @@
       <div v-for="match in matches" :key="match.id" class="p-4 bg-gray-100 rounded">
         <div class="flex justify-between items-center">
           <div>
-            Team 1: {{ getPlayerNames(match.players.slice(0, 2)) }}
+            Team 1: {{ match.players ? getPlayerNames(match.players.slice(0, 2)) : 'N/A' }}
             vs
-            Team 2: {{ getPlayerNames(match.players.slice(2, 4)) }}
+            Team 2: {{ match.players ? getPlayerNames(match.players.slice(2, 4)) : 'N/A' }}
           </div>
           <div v-if="match.status === 'completed'">
             Score: {{ match.score_team1 }} - {{ match.score_team2 }}

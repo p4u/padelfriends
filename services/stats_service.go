@@ -29,7 +29,7 @@ type PlayerStats struct {
 }
 
 // ComputeStats calculates statistics for all players in a group.
-func (s *StatsService) ComputeStats(ctx context.Context, groupID primitive.ObjectID) ([]PlayerStats, error) {
+func (s *StatsService) ComputeStats(ctx context.Context, groupName string) ([]PlayerStats, error) {
 	// This would involve looking up all matches, their details, and computing
 	// aggregates by player. Here we provide a placeholder structure.
 	//

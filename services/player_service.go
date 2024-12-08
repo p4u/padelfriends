@@ -20,11 +20,11 @@ func NewPlayerService(db *mongo.Database) *PlayerService {
 }
 
 // AddPlayer adds a player to a group if not duplicate.
-func (s *PlayerService) AddPlayer(ctx context.Context, groupID primitive.ObjectID, name string) (models.Player, error) {
+func (s *PlayerService) AddPlayer(ctx context.Context, groupName string, name string) (models.Player, error) {
 	playersColl := s.db.Collection("players")
 
 	// Check duplicate
-	err := playersColl.FindOne(ctx, bson.M{"group_id": groupID, "name": name}).Err()
+	err := playersColl.FindOne(ctx, bson.M{"group_name": groupName, "name": name}).Err()
 	if err == nil {
 		return models.Player{}, errors.New("player already exists in this group")
 	}
@@ -33,8 +33,8 @@ func (s *PlayerService) AddPlayer(ctx context.Context, groupID primitive.ObjectI
 	}
 
 	p := models.Player{
-		GroupID: groupID,
-		Name:    name,
+		GroupName: groupName,
+		Name:      name,
 	}
 
 	res, err := playersColl.InsertOne(ctx, p)
@@ -46,10 +46,10 @@ func (s *PlayerService) AddPlayer(ctx context.Context, groupID primitive.ObjectI
 }
 
 // ListPlayers lists all players for a given group.
-func (s *PlayerService) ListPlayers(ctx context.Context, groupID primitive.ObjectID) ([]models.Player, error) {
+func (s *PlayerService) ListPlayers(ctx context.Context, groupName string) ([]models.Player, error) {
 	playersColl := s.db.Collection("players")
 
-	cur, err := playersColl.Find(ctx, bson.M{"group_id": groupID}, options.Find().SetSort(bson.M{"name": 1}))
+	cur, err := playersColl.Find(ctx, bson.M{"group_name": groupName}, options.Find().SetSort(bson.M{"name": 1}))
 	if err != nil {
 		return nil, err
 	}

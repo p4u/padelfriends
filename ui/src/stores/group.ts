@@ -27,8 +27,8 @@ export const useGroupStore = defineStore('group', () => {
     error.value = null;
     
     try {
-      const response = await groupApi.getPlayers(currentGroup.value.id, groupPassword.value);
-      players.value = markRaw([...response.data]);
+      const response = await groupApi.getPlayers(currentGroup.value.name, groupPassword.value);
+      players.value = Array.isArray(response.data) ? markRaw([...response.data]) : [];
     } catch (err) {
       error.value = 'Failed to load players';
       console.error('Failed to load players:', err);
@@ -43,8 +43,8 @@ export const useGroupStore = defineStore('group', () => {
     error.value = null;
     
     try {
-      const response = await groupApi.getMatches(currentGroup.value.id, groupPassword.value);
-      matches.value = markRaw([...response.data]);
+      const response = await groupApi.getMatches(currentGroup.value.name, groupPassword.value);
+      matches.value = Array.isArray(response.data) ? markRaw([...response.data]) : [];
     } catch (err) {
       error.value = 'Failed to load matches';
       console.error('Failed to load matches:', err);
@@ -59,7 +59,7 @@ export const useGroupStore = defineStore('group', () => {
     error.value = null;
     
     try {
-      const response = await groupApi.getStatistics(currentGroup.value.id, groupPassword.value);
+      const response = await groupApi.getStatistics(currentGroup.value.name, groupPassword.value);
       statistics.value = markRaw([...response.data]);
     } catch (err) {
       error.value = 'Failed to load statistics';

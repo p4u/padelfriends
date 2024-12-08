@@ -75,8 +75,8 @@ const promptPassword = async (group: Group) => {
     const response = await groupApi.getByName(group.name, password);
     const joinedGroup = response.data;
     groupStore.setGroup(joinedGroup, password);
-    savedGroupsStore.addGroup(joinedGroup.id, joinedGroup.name, password);
-    router.push(`/group/${joinedGroup.id}`);
+    savedGroupsStore.addGroup(joinedGroup.name, joinedGroup.name, password);
+    router.push(`/group/${joinedGroup.name}`);
   } catch (err) {
     alert('❌ Wrong password or group not found');
   }
@@ -87,29 +87,29 @@ const createGroup = async (name: string, password: string) => {
     const response = await groupApi.create(name, password);
     const group = response.data;
     groupStore.setGroup(group, password);
-    savedGroupsStore.addGroup(group.id, group.name, password);
-    router.push(`/group/${group.id}`);
+    savedGroupsStore.addGroup(group.name, group.name, password);
+    router.push(`/group/${group.name}`);
     console.log('✅ Group created:', group);
   } catch (err) {
     alert('❌ Failed to create group. Please try again.');
   }
 };
 
-const joinSavedGroup = async (group: { id: string, name: string, password: string }) => {
+const joinSavedGroup = async (group: { name: string, password: string }) => {
   try {
     const response = await groupApi.getByName(group.name, group.password);
     const joinedGroup = response.data;
     groupStore.setGroup(joinedGroup, group.password);
-    router.push(`/group/${group.id}`);
+    router.push(`/group/${group.name}`);
   } catch (err) {
     alert('❌ Failed to join group. The group may no longer exist.');
-    savedGroupsStore.removeGroup(group.id);
+    savedGroupsStore.removeGroup(group.name);
   }
 };
 
-const removeGroup = (id: string) => {
+const removeGroup = (name: string) => {
   if (confirm('Are you sure you want to remove this group from your recent list?')) {
-    savedGroupsStore.removeGroup(id);
+    savedGroupsStore.removeGroup(name);
   }
 };
 </script>

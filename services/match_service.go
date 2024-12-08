@@ -20,7 +20,7 @@ func NewMatchService(db *mongo.Database) *MatchService {
 }
 
 // CreateMatch starts a new match record.
-func (s *MatchService) CreateMatch(ctx context.Context, groupID primitive.ObjectID, playerIDs []primitive.ObjectID) (models.Match, models.MatchDetail, error) {
+func (s *MatchService) CreateMatch(ctx context.Context, groupName string, playerIDs []primitive.ObjectID) (models.Match, models.MatchDetail, error) {
 	if len(playerIDs) != 4 {
 		return models.Match{}, models.MatchDetail{}, errors.New("exactly 4 players required for a match")
 	}
@@ -30,7 +30,7 @@ func (s *MatchService) CreateMatch(ctx context.Context, groupID primitive.Object
 
 	// Here we’d randomize teams. Simplify for now: first two = team1, last two = team2
 	match := models.Match{
-		GroupID:   groupID,
+		GroupName: groupName,
 		Timestamp: time.Now(),
 	}
 	res, err := matchesColl.InsertOne(ctx, match)
@@ -68,10 +68,10 @@ func (s *MatchService) SubmitResults(ctx context.Context, matchID primitive.Obje
 }
 
 // ListMatches returns all matches for a group.
-func (s *MatchService) ListMatches(ctx context.Context, groupID primitive.ObjectID) ([]models.Match, error) {
+func (s *MatchService) ListMatches(ctx context.Context, groupName string) ([]models.Match, error) {
 	matchesColl := s.db.Collection("matches")
 
-	cur, err := matchesColl.Find(ctx, bson.M{"group_id": groupID})
+	cur, err := matchesColl.Find(ctx, bson.M{"group_name": groupName})
 	if err != nil {
 		return nil, err
 	}

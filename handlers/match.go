@@ -14,17 +14,12 @@ type MatchHandler struct {
 	MatchService *services.MatchService
 }
 
-// POST /api/group/{id}/matches?password=SECRET
+// POST /api/group/{name}/matches?password=SECRET
 // Payload: { "player_ids": ["playerID1","playerID2","playerID3","playerID4"] }
 func (h *MatchHandler) CreateMatch(w http.ResponseWriter, r *http.Request) {
-	groupIDStr := chi.URLParam(r, "id")
-	groupID, err := parseObjectID(groupIDStr)
-	if err != nil {
-		http.Error(w, "Invalid group ID", http.StatusBadRequest)
-		return
-	}
+	groupName := chi.URLParam(r, "name")
 
-	if !checkGroupPassword(w, r, h.GroupService, groupID) {
+	if !checkGroupPassword(w, r, h.GroupService, groupName) {
 		return
 	}
 
@@ -50,7 +45,7 @@ func (h *MatchHandler) CreateMatch(w http.ResponseWriter, r *http.Request) {
 		pids = append(pids, objID)
 	}
 
-	m, d, err := h.MatchService.CreateMatch(r.Context(), groupID, pids)
+	m, d, err := h.MatchService.CreateMatch(r.Context(), groupName, pids)
 	if err != nil {
 		http.Error(w, "Error creating match: "+err.Error(), http.StatusBadRequest)
 		return
@@ -63,18 +58,13 @@ func (h *MatchHandler) CreateMatch(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, res)
 }
 
-// POST /api/group/{id}/matches/{match_id}/results?password=SECRET
+// POST /api/group/{name}/matches/{match_id}/results?password=SECRET
 // Payload: { "score_team1": X, "score_team2": Y }
 func (h *MatchHandler) SubmitResults(w http.ResponseWriter, r *http.Request) {
-	groupIDStr := chi.URLParam(r, "id")
+	groupName := chi.URLParam(r, "name")
 	matchIDStr := chi.URLParam(r, "match_id")
 
-	groupID, err := parseObjectID(groupIDStr)
-	if err != nil {
-		http.Error(w, "Invalid group ID", http.StatusBadRequest)
-		return
-	}
-	if !checkGroupPassword(w, r, h.GroupService, groupID) {
+	if !checkGroupPassword(w, r, h.GroupService, groupName) {
 		return
 	}
 
@@ -101,19 +91,14 @@ func (h *MatchHandler) SubmitResults(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
 }
 
-// GET /api/group/{id}/matches?password=SECRET
+// GET /api/group/{name}/matches?password=SECRET
 func (h *MatchHandler) ListMatches(w http.ResponseWriter, r *http.Request) {
-	groupIDStr := chi.URLParam(r, "id")
-	groupID, err := parseObjectID(groupIDStr)
-	if err != nil {
-		http.Error(w, "Invalid group ID", http.StatusBadRequest)
-		return
-	}
-	if !checkGroupPassword(w, r, h.GroupService, groupID) {
+	groupName := chi.URLParam(r, "name")
+	if !checkGroupPassword(w, r, h.GroupService, groupName) {
 		return
 	}
 
-	matches, err := h.MatchService.ListMatches(r.Context(), groupID)
+	matches, err := h.MatchService.ListMatches(r.Context(), groupName)
 	if err != nil {
 		http.Error(w, "Error listing matches: "+err.Error(), http.StatusInternalServerError)
 		return

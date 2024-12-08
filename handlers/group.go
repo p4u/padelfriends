@@ -71,23 +71,6 @@ func (h *GroupHandler) GetGroupByName(w http.ResponseWriter, r *http.Request) {
 // ListGroups handles GET /api/groups?password=SECRET
 // Retrieves a list of all groups. This endpoint can be secured as needed.
 func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
-	password := r.Header.Get("X-Group-Password") // Securely retrieve password from headers
-	if password == "" {
-		writeError(w, http.StatusBadRequest, "Missing X-Group-Password header")
-		return
-	}
-
-	// Optionally, verify password here if required for listing groups
-	// For example, only allow listing if the password matches a master password
-	// This depends on your application's authentication logic
-
-	// For demonstration, assume a master password is "adminsecret"
-	masterPassword := "adminsecret"
-	if password != masterPassword {
-		writeError(w, http.StatusUnauthorized, "Invalid master password")
-		return
-	}
-
 	groups, err := h.GroupService.ListGroups(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Error listing groups: "+err.Error())

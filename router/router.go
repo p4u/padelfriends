@@ -23,7 +23,7 @@ func New(
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/group", groupHandler.CreateGroup)
 		r.Get("/group/byname/{name}", groupHandler.GetGroupByName)
-		r.Get("/groups", groupHandler.ListGroups) // **Added this line**
+		r.Get("/groups", groupHandler.ListGroups) 
 
 		r.Route("/group/{id}", func(r chi.Router) {
 			r.Post("/players", playerHandler.AddPlayer)

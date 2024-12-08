@@ -22,6 +22,13 @@ frontend:
 	cd ui && npm install && npm run build
 	@echo "Frontend built successfully."
 
+# Build the frontend using Vite and Vue
+frontend_reload:
+	@echo "Building frontend with Vite and Vue..."
+	cd ui && npm run build
+	@echo "Frontend built successfully."
+
+
 # Clean build artifacts
 clean:
 	@echo "Cleaning Go backend..."
@@ -39,6 +46,6 @@ clean:
 	fi
 
 # Optional: Run the backend (add more commands as needed)
-run:
+run: backend frontend_reload
 	@echo "Running Go backend..."
 	./backend

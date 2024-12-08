@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/p4u/padelfriends/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -43,6 +44,7 @@ func (s *GroupService) CreateGroup(ctx context.Context, name, password string) (
 	group := models.Group{
 		Name:         name,
 		PasswordHash: hash,
+		CreatedAt:    time.Now(),
 	}
 
 	res, err := groupsColl.InsertOne(ctx, group)
@@ -76,13 +78,22 @@ func (s *GroupService) GetGroupByID(ctx context.Context, id primitive.ObjectID) 
 	return g, nil
 }
 
-// ListGroups retrieves all groups.
-// Note: Implement proper authorization to restrict access as needed.
-func (s *GroupService) ListGroups(ctx context.Context) ([]models.Group, error) {
+// ListGroupDetails retrieves the ID, name, and creation time of all groups, sorted alphabetically by name.
+func (s *GroupService) ListGroups(ctx context.Context) ([]struct {
+	ID        primitive.ObjectID `bson:"_id"`
+	Name      string             `bson:"name"`
+	CreatedAt time.Time          `bson:"created_at"`
+}, error) {
 	groupsColl := s.db.Collection("groups")
 
-	// Optionally, implement pagination or filtering here
-	findOptions := options.Find().SetSort(bson.D{{Key: "name", Value: 1}}) // Sort by name ascending
+	// Query to fetch ID, name, and created_at fields, sorted by name
+	findOptions := options.Find().
+		SetSort(bson.D{{Key: "name", Value: 1}}). // Sort by name ascending
+		SetProjection(bson.D{
+			{Key: "_id", Value: 1},
+			{Key: "name", Value: 1},
+			{Key: "created_at", Value: 1},
+		}) // Include only ID, name, and created_at
 
 	cursor, err := groupsColl.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
@@ -90,10 +101,16 @@ func (s *GroupService) ListGroups(ctx context.Context) ([]models.Group, error) {
 	}
 	defer cursor.Close(ctx)
 
-	var groups []models.Group
+	// Extract the relevant fields from the result
+	var groups []struct {
+		ID        primitive.ObjectID `bson:"_id"`
+		Name      string             `bson:"name"`
+		CreatedAt time.Time          `bson:"created_at"`
+	}
 	if err := cursor.All(ctx, &groups); err != nil {
 		return nil, err
 	}
+
 	return groups, nil
 }
 

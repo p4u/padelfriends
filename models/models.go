@@ -12,6 +12,7 @@ type Group struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty"`
 	Name         string             `bson:"name"`
 	PasswordHash string             `bson:"password_hash"`
+	CreatedAt    time.Time          `bson:"created_at"`
 }
 
 // Player represents a player within a group.

@@ -63,3 +63,7 @@ clean:
 run: backend frontend_reload
 	@echo "Running Go backend..."
 	./backend
+
+execute:
+	@echo "Running Go backend..."
+	./backend

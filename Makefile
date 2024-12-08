@@ -1,8 +1,20 @@
 # Makefile for Padel Friends Project
 
-.PHONY: all backend frontend clean
+.PHONY: all backend frontend frontend_reload clean run check_npm
 
-# Default target: build backend and frontend if ui directory exists
+# Check if npm is available
+HAVE_NPM := $(shell command -v npm >/dev/null 2>&1 && echo yes || echo no)
+
+ifeq ($(HAVE_NPM),no)
+NPM_SETUP = curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash && \
+	export NVM_DIR="$(HOME)/.nvm" && [ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh" && nvm install node
+RUN_NPM = export NVM_DIR="$(HOME)/.nvm"; [ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh" && npm
+else
+NPM_SETUP = echo "npm is already installed ($(shell which npm)), skipping nvm installation."
+RUN_NPM = npm
+endif
+
+# Default target: build backend and then frontend if UI is present
 all: backend
 	@if [ -d ui ]; then \
 		$(MAKE) frontend; \
@@ -16,18 +28,20 @@ backend:
 	go build -o backend .
 	@echo "Go backend built successfully."
 
-# Build the frontend using Vite and Vue
-frontend:
-	@echo "Building frontend with Vite and Vue..."
-	cd ui && npm install && npm run build
-	@echo "Frontend built successfully."
+# Ensure npm is available (install if not)
+check_npm:
+	@$(NPM_SETUP)
 
 # Build the frontend using Vite and Vue
-frontend_reload:
+frontend: check_npm
 	@echo "Building frontend with Vite and Vue..."
-	cd ui && npm run build
+	cd ui && $(RUN_NPM) install && $(RUN_NPM) run build
 	@echo "Frontend built successfully."
 
+frontend_reload: check_npm
+	@echo "Building frontend with Vite and Vue (reload)..."
+	cd ui && $(RUN_NPM) run build
+	@echo "Frontend built successfully."
 
 # Clean build artifacts
 clean:
@@ -38,14 +52,14 @@ clean:
 
 	@if [ -d ui ]; then \
 		echo "Cleaning frontend..."; \
-		cd ui && npm run clean; \
+		cd ui && $(RUN_NPM) run clean; \
 		rm -rf ui/node_modules ui/dist; \
 		echo "Frontend cleaned."; \
 	else \
 		echo "UI directory not found, skipping frontend clean"; \
 	fi
 
-# Optional: Run the backend (add more commands as needed)
+# Optional: Run the backend
 run: backend frontend_reload
 	@echo "Running Go backend..."
 	./backend

@@ -81,7 +81,7 @@ func (s *StatsService) ComputeStats(ctx context.Context, groupName string) ([]Pl
 			}
 			stats := playerStatsMap[playerID]
 			stats.TotalGames++
-			stats.TotalPoints += detail.ScoreTeam1
+			stats.TotalPoints = stats.PointsWon + stats.PointsLost // Update total points
 			stats.PointsWon += detail.ScoreTeam1
 			stats.PointsLost += detail.ScoreTeam2
 			if detail.ScoreTeam1 > detail.ScoreTeam2 {
@@ -98,7 +98,7 @@ func (s *StatsService) ComputeStats(ctx context.Context, groupName string) ([]Pl
 			}
 			stats := playerStatsMap[playerID]
 			stats.TotalGames++
-			stats.TotalPoints += detail.ScoreTeam2
+			stats.TotalPoints = stats.PointsWon + stats.PointsLost // Update total points
 			stats.PointsWon += detail.ScoreTeam2
 			stats.PointsLost += detail.ScoreTeam1
 			if detail.ScoreTeam2 > detail.ScoreTeam1 {
@@ -125,9 +125,13 @@ func (s *StatsService) ComputeStats(ctx context.Context, groupName string) ([]Pl
 			stats.GameWinRate = float64(stats.GamesWon) / float64(stats.TotalGames) * 100
 			stats.GameLossRate = float64(stats.GamesLost) / float64(stats.TotalGames) * 100
 		}
-		if stats.TotalPoints > 0 {
-			stats.PointWinRate = float64(stats.PointsWon) / float64(stats.TotalPoints) * 100
-			stats.PointLossRate = float64(stats.PointsLost) / float64(stats.TotalPoints) * 100
+
+		// Calculate total points and rates
+		totalPointsPlayed := stats.PointsWon + stats.PointsLost
+		if totalPointsPlayed > 0 {
+			stats.TotalPoints = totalPointsPlayed
+			stats.PointWinRate = float64(stats.PointsWon) / float64(totalPointsPlayed) * 100
+			stats.PointLossRate = float64(stats.PointsLost) / float64(totalPointsPlayed) * 100
 		}
 
 		stats.PlayerName = player.Name

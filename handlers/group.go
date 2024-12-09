@@ -39,18 +39,11 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, group)
 }
 
-// GetGroupByName handles GET /api/group/byname/{name}?password=SECRET
-// Retrieves a group by name if password is correct
+// GetGroupByName handles GET /api/group/byname/{name}
 func (h *GroupHandler) GetGroupByName(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	if name == "" {
 		writeError(w, http.StatusBadRequest, "Missing group name")
-		return
-	}
-
-	password := getQueryParam(r, "password")
-	if password == "" {
-		writeError(w, http.StatusBadRequest, "Missing password")
 		return
 	}
 
@@ -60,16 +53,26 @@ func (h *GroupHandler) GetGroupByName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !services.CheckPassword(password, g.PasswordHash) {
-		writeError(w, http.StatusUnauthorized, "Invalid password")
+	// Check password if provided for authentication status
+	password := getQueryParam(r, "password")
+	if password != "" && services.CheckPassword(password, g.PasswordHash) {
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"name":            g.Name,
+			"created_at":      g.CreatedAt,
+			"isAuthenticated": true,
+		})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, g)
+	// Return basic info for unauthenticated requests
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"name":            g.Name,
+		"created_at":      g.CreatedAt,
+		"isAuthenticated": false,
+	})
 }
 
-// ListGroups handles GET /api/groups?password=SECRET
-// Retrieves a list of all groups. This endpoint can be secured as needed.
+// ListGroups handles GET /api/groups
 func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 	groups, err := h.GroupService.ListGroups(r.Context())
 	if err != nil {
@@ -80,18 +83,19 @@ func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, groups)
 }
 
-// ExportGroupMatchesCSV handles GET /api/group/{name}/export/csv?password=SECRET
-// Exports all matches for a group in CSV format
-func (h *GroupHandler) ExportGroupMatchesCSV(w http.ResponseWriter, r *http.Request) {
+// AuthenticateGroup handles POST /api/group/{name}/authenticate
+func (h *GroupHandler) AuthenticateGroup(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	if name == "" {
 		writeError(w, http.StatusBadRequest, "Missing group name")
 		return
 	}
 
-	password := getQueryParam(r, "password")
-	if password == "" {
-		writeError(w, http.StatusBadRequest, "Missing password")
+	var payload struct {
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
 
@@ -101,8 +105,23 @@ func (h *GroupHandler) ExportGroupMatchesCSV(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if !services.CheckPassword(password, g.PasswordHash) {
+	if !services.CheckPassword(payload.Password, g.PasswordHash) {
 		writeError(w, http.StatusUnauthorized, "Invalid password")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"name":            g.Name,
+		"created_at":      g.CreatedAt,
+		"isAuthenticated": true,
+	})
+}
+
+// ExportGroupMatchesCSV handles GET /api/group/{name}/export/csv
+func (h *GroupHandler) ExportGroupMatchesCSV(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	if name == "" {
+		writeError(w, http.StatusBadRequest, "Missing group name")
 		return
 	}
 

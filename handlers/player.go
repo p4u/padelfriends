@@ -17,7 +17,7 @@ type PlayerHandler struct {
 // Payload: { "name": "PlayerName" }
 func (h *PlayerHandler) AddPlayer(w http.ResponseWriter, r *http.Request) {
 	groupName := chi.URLParam(r, "name")
-	// Check password
+
 	if !checkGroupPassword(w, r, h.GroupService, groupName) {
 		return
 	}
@@ -29,28 +29,24 @@ func (h *PlayerHandler) AddPlayer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
+
 	if payload.Name == "" {
-		http.Error(w, "Name is required", http.StatusBadRequest)
+		http.Error(w, "Player name is required", http.StatusBadRequest)
 		return
 	}
 
 	player, err := h.PlayerService.AddPlayer(r.Context(), groupName, payload.Name)
 	if err != nil {
-		http.Error(w, "Error adding player: "+err.Error(), http.StatusConflict)
+		http.Error(w, "Error adding player: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	writeJSON(w, http.StatusCreated, player)
 }
 
-// GET /api/group/{name}/players?password=SECRET
+// GET /api/group/{name}/players
 func (h *PlayerHandler) ListPlayers(w http.ResponseWriter, r *http.Request) {
 	groupName := chi.URLParam(r, "name")
-
-	// Check password
-	if !checkGroupPassword(w, r, h.GroupService, groupName) {
-		return
-	}
 
 	players, err := h.PlayerService.ListPlayers(r.Context(), groupName)
 	if err != nil {

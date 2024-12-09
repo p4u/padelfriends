@@ -1,7 +1,8 @@
 <template>
   <div class="space-y-6">
-    <!-- Add Player Form -->
-    <form @submit.prevent="$emit('add-player', newPlayerName)" 
+    <!-- Add Player Form - Only visible when authenticated -->
+    <form v-if="isAuthenticated"
+          @submit.prevent="$emit('add-player', newPlayerName)" 
           class="bg-gradient-to-r from-blue-500 to-indigo-500 p-6 rounded-xl shadow-lg space-y-4">
       <h3 class="text-xl font-bold text-white mb-4">👥 Add New Player</h3>
       <div class="flex space-x-4">
@@ -18,7 +19,7 @@
       </div>
     </form>
 
-    <!-- Players List -->
+    <!-- Players List - Always visible -->
     <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
       <div v-for="player in sortedPlayers" 
            :key="player.id" 
@@ -38,6 +39,7 @@ import type { Player } from '../types';
 
 const props = defineProps<{
   players: Player[];
+  isAuthenticated: boolean;
 }>();
 
 const newPlayerName = ref('');

@@ -2,9 +2,14 @@
   <div class="max-w-4xl mx-auto space-y-8">
     <!-- Group Header -->
     <div class="modern-container bg-white dark:bg-gray-800">
-      <h1 class="text-2xl font-bold mb-4 text-center text-gray-900 dark:text-white">
-        {{ currentGroup?.name }}
-      </h1>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+          {{ currentGroup?.name }}
+        </h1>
+        <span v-if="isAuthenticated" class="text-green-500 dark:text-green-400 flex items-center gap-2">
+          <span>🔓</span> Edit Mode
+        </span>
+      </div>
       <div class="flex flex-wrap justify-center gap-2">
         <button 
           v-for="tab in tabs" 
@@ -20,6 +25,34 @@
       </div>
     </div>
 
+    <!-- Authentication Dialog -->
+    <div v-if="showingAuthDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Enter Group Password</h3>
+        <input
+          v-model="password"
+          type="password"
+          class="modern-input w-full mb-4"
+          placeholder="Password"
+          @keyup.enter="authenticate"
+        />
+        <div class="flex justify-end space-x-3">
+          <button 
+            @click="showingAuthDialog = false"
+            class="modern-button bg-gray-500"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="authenticate"
+            class="modern-button bg-blue-500"
+          >
+            Authenticate
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Content Tabs -->
     <div class="modern-container bg-white dark:bg-gray-800">
       <div v-if="loading" class="text-center text-gray-900 dark:text-white">
@@ -28,14 +61,28 @@
       <div v-else-if="error" class="text-center text-red-500">
         {{ error }} 😢
       </div>
-      <component
-        v-else
-        :is="currentComponent"
-        v-bind="componentProps"
-        @add-player="addPlayer"
-        @create-match="createMatch"
-        @submit-score="showSubmitScore"
-      />
+      <div v-else>
+        <!-- Auth prompt when not authenticated -->
+        <div v-if="!isAuthenticated" class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg mb-8">
+          <div class="text-center space-y-4">
+            <p class="text-gray-600 dark:text-gray-400">To create content, please authenticate</p>
+            <button 
+              @click="showAuthDialog"
+              class="modern-button bg-blue-500 hover:bg-blue-600"
+            >
+              🔐 Auth
+            </button>
+          </div>
+        </div>
+
+        <component
+          :is="currentComponent"
+          v-bind="componentProps"
+          @add-player="addPlayer"
+          @create-match="createMatch"
+          @submit-score="showSubmitScore"
+        />
+      </div>
     </div>
 
     <!-- Export Button -->
@@ -63,20 +110,23 @@ import type { Match } from '../types';
 const route = useRoute();
 const router = useRouter();
 const groupStore = useGroupStore();
-const activeTab = ref('matches'); // Changed default tab to matches
+const activeTab = ref('matches');
 const loading = ref(false);
 const error = ref<string | null>(null);
+const showingAuthDialog = ref(false);
+const password = ref('');
+
+const currentGroup = computed(() => groupStore.currentGroup);
+const isAuthenticated = computed(() => groupStore.isAuthenticated);
+const players = computed(() => groupStore.players);
+const matches = computed(() => groupStore.matches);
+const statistics = computed(() => groupStore.statistics);
 
 const tabs = [
   { value: 'matches', label: 'Matches', icon: '🎾' },
   { value: 'players', label: 'Players', icon: '👥' },
   { value: 'statistics', label: 'Stats', icon: '📊' }
 ];
-
-const currentGroup = computed(() => groupStore.currentGroup);
-const players = computed(() => groupStore.players);
-const matches = computed(() => groupStore.matches);
-const statistics = computed(() => groupStore.statistics);
 
 const currentComponent = computed(() => {
   switch (activeTab.value) {
@@ -89,46 +139,31 @@ const currentComponent = computed(() => {
 
 const componentProps = computed(() => {
   switch (activeTab.value) {
-    case 'players': return { players: players.value };
-    case 'matches': return { matches: matches.value, players: players.value };
+    case 'players': return { players: players.value, isAuthenticated: isAuthenticated.value };
+    case 'matches': return { matches: matches.value, players: players.value, isAuthenticated: isAuthenticated.value };
     case 'statistics': return { statistics: statistics.value };
     default: return {};
   }
 });
 
-const downloadCSV = async () => {
-  if (!currentGroup.value) return;
+const showAuthDialog = () => {
+  showingAuthDialog.value = true;
+  password.value = '';
+};
+
+const authenticate = async () => {
+  if (!password.value) return;
   
-  try {
-    const response = await groupApi.exportMatchesCSV(
-      currentGroup.value.name,
-      groupStore.groupPassword
-    );
-    
-    // Create blob and download
-    const blob = new Blob([response.data], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentGroup.value.name}-matches.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  } catch (error) {
-    alert('Failed to export matches');
+  const success = await groupStore.authenticate(password.value);
+  if (success) {
+    showingAuthDialog.value = false;
+    await loadGroupData();
+  } else {
+    alert('Invalid password');
   }
 };
 
-onMounted(async () => {
-  if (!currentGroup.value) {
-    const restored = await groupStore.restoreGroupFromStorage();
-    if (!restored) {
-      router.push('/');
-      return;
-    }
-  }
-
+const loadGroupData = async () => {
   loading.value = true;
   error.value = null;
 
@@ -144,10 +179,22 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+};
+
+onMounted(async () => {
+  if (!currentGroup.value) {
+    const restored = await groupStore.restoreGroupFromStorage();
+    if (!restored) {
+      router.push('/');
+      return;
+    }
+  }
+
+  await loadGroupData();
 });
 
 const addPlayer = async (name: string) => {
-  if (!currentGroup.value) return;
+  if (!currentGroup.value || !isAuthenticated.value) return;
   
   try {
     await groupApi.addPlayer(
@@ -162,7 +209,7 @@ const addPlayer = async (name: string) => {
 };
 
 const createMatch = async (playerIds: string[]) => {
-  if (!currentGroup.value) return;
+  if (!currentGroup.value || !isAuthenticated.value) return;
   
   try {
     await groupApi.createMatch(
@@ -177,6 +224,11 @@ const createMatch = async (playerIds: string[]) => {
 };
 
 const showSubmitScore = async (match: Match) => {
+  if (!isAuthenticated.value) {
+    alert('Please authenticate to submit scores');
+    return;
+  }
+
   const score1 = prompt('Enter score for Team 1:');
   const score2 = prompt('Enter score for Team 2:');
   
@@ -204,6 +256,29 @@ const showSubmitScore = async (match: Match) => {
     ]);
   } catch (error) {
     alert('Failed to submit match results');
+  }
+};
+
+const downloadCSV = async () => {
+  if (!currentGroup.value) return;
+  
+  try {
+    const response = await groupApi.exportMatchesCSV(
+      currentGroup.value.name
+    );
+    
+    // Create blob and download
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentGroup.value.name}-matches.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    alert('Failed to export matches');
   }
 };
 </script>

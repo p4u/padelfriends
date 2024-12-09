@@ -12,16 +12,13 @@ type StatsHandler struct {
 	StatsService *services.StatsService
 }
 
-// GET /api/group/{id}/statistics?password=SECRET
+// GET /api/group/{name}/statistics
 func (h *StatsHandler) GetStatistics(w http.ResponseWriter, r *http.Request) {
 	groupName := chi.URLParam(r, "name")
-	if !checkGroupPassword(w, r, h.GroupService, groupName) {
-		return
-	}
 
 	stats, err := h.StatsService.ComputeStats(r.Context(), groupName)
 	if err != nil {
-		http.Error(w, "Error computing stats: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error computing statistics: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

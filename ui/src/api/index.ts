@@ -35,20 +35,32 @@ api.interceptors.response.use(
   }
 );
 
+// Helper function to get stored password
+const getStoredPassword = () => localStorage.getItem('groupPassword');
+
+// Helper function to add password to params if available
+const addStoredPassword = (params: any = {}) => {
+  const password = getStoredPassword();
+  return password ? { ...params, password } : params;
+};
+
 export const groupApi = {
   create: (name: string, password: string) => 
     api.post('/group', { name, password }),
   
   list: () => api.get('/groups'),
   
-  getByName: (name: string, password: string) =>
-    api.get(`/group/byname/${name}`, { params: { password } }),
+  getByName: (name: string) =>
+    api.get(`/group/byname/${name}`, { params: addStoredPassword() }),
+  
+  authenticate: (name: string, password: string) =>
+    api.post(`/group/${name}/authenticate`, { password }),
   
   addPlayer: (groupId: string, password: string, name: string) =>
     api.post(`/group/${groupId}/players`, { name }, { params: { password } }),
   
-  getPlayers: (groupId: string, password: string) =>
-    api.get(`/group/${groupId}/players`, { params: { password } }),
+  getPlayers: (groupId: string) =>
+    api.get(`/group/${groupId}/players`, { params: addStoredPassword() }),
   
   createMatch: (groupId: string, password: string, playerIds: string[]) =>
     api.post(`/group/${groupId}/matches`, 
@@ -77,29 +89,27 @@ export const groupApi = {
       { params: { password } }
     ),
   
-  getRecentMatches: (groupId: string, password: string) =>
+  getRecentMatches: (groupId: string) =>
     api.get(`/group/${groupId}/matches`, { 
-      params: { 
-        password,
+      params: addStoredPassword({
         recent: true
-      } 
+      })
     }),
 
-  getMatches: (groupId: string, password: string, page: number = 1, pageSize: number = 10) =>
+  getMatches: (groupId: string, page: number = 1, pageSize: number = 10) =>
     api.get(`/group/${groupId}/matches`, { 
-      params: { 
-        password,
+      params: addStoredPassword({
         page,
         pageSize
-      } 
+      })
     }),
   
-  getStatistics: (groupId: string, password: string) =>
-    api.get(`/group/${groupId}/statistics`, { params: { password } }),
+  getStatistics: (groupId: string) =>
+    api.get(`/group/${groupId}/statistics`, { params: addStoredPassword() }),
 
-  exportMatchesCSV: (groupId: string, password: string) =>
-    api.get(`/group/${groupId}/export/csv`, {
-      params: { password },
-      responseType: 'blob'
+  exportMatchesCSV: (groupId: string) =>
+    api.get(`/group/${groupId}/export/csv`, { 
+      params: addStoredPassword(),
+      responseType: 'blob' 
     }),
 };

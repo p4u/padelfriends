@@ -6,7 +6,10 @@
         <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500">
           Padel Friends
         </h1>
-        <p class="text-gray-600 dark:text-gray-300">Connect, Play, Compete</p>
+        <p class="text-gray-600 dark:text-gray-300">Connect, Play, Enjoy</p>
+        <div class="flex justify-center">
+          <img src="/icons/icon-512x512.png" alt="Padel Friends Logo" class="w-32 h-32" />
+        </div>
       </div>
       
       <!-- Recent Groups -->
@@ -43,7 +46,7 @@
             v-for="group in filteredGroups" 
             :key="group.id"
             class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer p-4"
-            @click="promptPassword(group)"
+            @click="joinGroup(group)"
           >
             <div class="flex items-center space-x-3">
               <span class="text-2xl">🎯</span>
@@ -53,21 +56,24 @@
         </div>
       </div>
 
-      <!-- Create Group Form -->
+      <!-- Register Group Form -->
       <div class="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl shadow-lg p-6">
-        <h2 class="text-2xl font-bold text-white mb-6">Create New Group</h2>
+        <div class="text-center mb-6">
+          <h2 class="text-2xl font-bold text-white">Register a new group</h2>
+          <p class="text-white/80 mt-2">for casual play, a tournament or a league, it's free!</p>
+        </div>
         <form @submit.prevent="createGroup" class="space-y-4">
           <input
             v-model="form.name"
             type="text"
-            placeholder="Group Name"
+            placeholder="Enter a new group name"
             class="modern-input w-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
             required
           />
           <input
             v-model="form.password"
             type="password"
-            placeholder="Password"
+            placeholder="Enter a password for you and your friends"
             class="modern-input w-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
             required
           />
@@ -129,24 +135,20 @@ onMounted(async () => {
   }
 });
 
-const promptPassword = async (group: Group) => {
+const joinGroup = async (group: Group) => {
   if (!group || !group.name) {
-    console.error('Invalid group data in promptPassword:', group);
+    console.error('Invalid group data:', group);
     return;
   }
 
-  const password = prompt(`Enter password for group "${group.name}":`);
-  if (!password) return;
-
   try {
-    const response = await groupApi.getByName(group.name, password);
+    const response = await groupApi.getByName(group.name);
     const joinedGroup = response.data;
-    groupStore.setGroup(joinedGroup, password);
-    savedGroupsStore.addGroup(joinedGroup.name, joinedGroup.name, password);
+    await groupStore.setGroup(joinedGroup);
     router.push(`/group/${joinedGroup.name}`);
   } catch (err) {
     console.error('Error joining group:', err);
-    alert('Wrong password or group not found');
+    alert('Failed to join group');
   }
 };
 
@@ -154,7 +156,7 @@ const createGroup = async () => {
   try {
     const response = await groupApi.create(form.value.name, form.value.password);
     const group = response.data;
-    groupStore.setGroup(group, form.value.password);
+    await groupStore.setGroup(group, form.value.password);
     savedGroupsStore.addGroup(group.name, group.name, form.value.password);
     router.push(`/group/${group.name}`);
     console.log('✅ Group created:', group);
@@ -166,9 +168,9 @@ const createGroup = async () => {
 
 const joinSavedGroup = async (group: { name: string, password: string }) => {
   try {
-    const response = await groupApi.getByName(group.name, group.password);
+    const response = await groupApi.getByName(group.name);
     const joinedGroup = response.data;
-    groupStore.setGroup(joinedGroup, group.password);
+    await groupStore.setGroup(joinedGroup, group.password);
     router.push(`/group/${group.name}`);
   } catch (err) {
     console.error('Error joining saved group:', err);

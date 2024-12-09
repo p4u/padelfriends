@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-8">
     <!-- Match Creation Section -->
-    <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg space-y-6">
+    <div v-if="isAuthenticated" class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg space-y-6">
       <!-- Single Match Form -->
       <form @submit.prevent="handleSubmit" class="space-y-4 bg-gradient-to-r from-blue-500 to-indigo-500 p-6 rounded-xl shadow-lg">
-        <h3 class="text-xl font-bold text-white mb-4">New Match</h3>
+        <h3 class="text-xl font-bold text-white mb-4">New Match (one set)</h3>
         <div class="grid grid-cols-2 gap-6">
           <div v-for="(team, index) in ['Team 1', 'Team 2']" :key="team" class="space-y-3">
             <div class="flex items-center">
@@ -109,7 +109,7 @@
                        class="text-2xl font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg">
                     {{ match.score_team1 }} - {{ match.score_team2 }}
                   </div>
-                  <div v-else-if="match.status === 'pending'" class="flex space-x-2">
+                  <div v-else-if="match.status === 'pending' && isAuthenticated" class="flex space-x-2">
                     <button
                       @click="showSubmitScore(match)"
                       class="modern-button bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold"
@@ -122,6 +122,9 @@
                     >
                       ❌ Cancel
                     </button>
+                  </div>
+                  <div v-else-if="match.status === 'pending'" class="text-sm text-gray-500 dark:text-gray-400">
+                    Match in progress
                   </div>
                 </div>
               </div>
@@ -158,6 +161,7 @@
 
     <!-- Submit Score Modal -->
     <SubmitScore
+      v-if="isAuthenticated"
       :show="showScoreModal"
       :match="selectedMatch"
       @close="closeSubmitScore"
@@ -177,6 +181,7 @@ import type { Match, Player, PlayerInfo } from '../types';
 const props = defineProps<{
   matches: Match[];
   players: Player[];
+  isAuthenticated: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -287,7 +292,6 @@ const changePage = async (page: number) => {
   try {
     const response = await groupApi.getMatches(
       groupStore.currentGroup!.name,
-      groupStore.groupPassword,
       page,
       pageSize
     );

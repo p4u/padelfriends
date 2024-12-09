@@ -156,12 +156,9 @@ func (h *MatchHandler) SubmitResults(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
 }
 
-// GET /api/group/{name}/matches?password=SECRET&page=1&pageSize=10
+// GET /api/group/{name}/matches?page=1&pageSize=10
 func (h *MatchHandler) ListMatches(w http.ResponseWriter, r *http.Request) {
 	groupName := chi.URLParam(r, "name")
-	if !checkGroupPassword(w, r, h.GroupService, groupName) {
-		return
-	}
 
 	// Check if we want recent matches or paginated list
 	wantRecent := r.URL.Query().Get("recent") == "true"

@@ -48,10 +48,10 @@
             </div>
           </div>
 
-          <!-- Number of Matches -->
+          <!-- Number of Sets -->
           <div class="space-y-2">
             <label class="block font-medium text-gray-900 dark:text-white">
-              Number of Matches
+              Number of 1-set games
             </label>
             <input 
               type="number" 

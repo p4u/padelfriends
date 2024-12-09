@@ -26,9 +26,9 @@
               <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                 Player
               </th>
-              <template v-if="activeTab === 'games'">
+              <template v-if="activeTab === 'sets'">
                 <th 
-                  v-for="col in gameColumns" 
+                  v-for="col in setColumns" 
                   :key="col.key"
                   @click="sortBy(col.key)"
                   class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -77,9 +77,9 @@
                   </span>
                 </div>
               </td>
-              <template v-if="activeTab === 'games'">
+              <template v-if="activeTab === 'sets'">
                 <td 
-                  v-for="col in gameColumns" 
+                  v-for="col in setColumns" 
                   :key="col.key"
                   class="px-6 py-4 text-gray-900 dark:text-white"
                 >
@@ -115,17 +115,17 @@ const props = defineProps<{
   statistics: Statistics[];
 }>();
 
-const activeTab = ref('games');
+const activeTab = ref('sets');
 const sortKey = ref('games_won');
 const sortOrder = ref<'asc' | 'desc'>('desc');
 
 const tabs = [
-  { value: 'games', label: 'Games', icon: '🎮' },
+  { value: 'sets', label: 'Sets', icon: '🎮' },
   { value: 'points', label: 'Points', icon: '📊' }
 ];
 
-const gameColumns = [
-  { key: 'total_games', label: 'Games' },
+const setColumns = [
+  { key: 'total_games', label: 'Sets' },
   { key: 'games_won', label: 'Wins' },
   { key: 'game_win_rate', label: 'Win %' },
   { key: 'games_lost', label: 'Losses' },
@@ -169,8 +169,11 @@ const formatValue = (value: number, key: string) => {
 };
 
 const getValueClass = (value: number, key: string) => {
-  if (!key.includes('rate') && !key.includes('total')) {
-    return value > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+  if (key.includes('lost')) {
+    return 'text-red-600 dark:text-red-400';
+  }
+  if (!key.includes('rate') && !key.includes('total') && !key.includes('lost')) {
+    return value > 0 ? 'text-green-600 dark:text-green-400' : '';
   }
   return '';
 };

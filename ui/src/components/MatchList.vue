@@ -17,7 +17,7 @@
                 required
                 @change="validateSelection"
               >
-                <option value="">Select Player 1</option>
+                <option value="">Player 1</option>
                 <option 
                   v-for="player in availablePlayersForSelect(index, 0)" 
                   :key="player.id" 
@@ -32,7 +32,7 @@
                 required
                 @change="validateSelection"
               >
-                <option value="">Select Player 2</option>
+                <option value="">Player 2</option>
                 <option 
                   v-for="player in availablePlayersForSelect(index, 1)" 
                   :key="player.id" 
@@ -85,8 +85,8 @@
                 <div class="flex-1 grid grid-cols-[1fr,auto,1fr] items-center gap-4">
                   <!-- Team 1 -->
                   <div class="text-right">
-                    <div class="font-bold text-blue-600 dark:text-blue-400">
-                      {{ getTeamNames(match.team1) }}
+                    <div class="font-bold text-blue-600 dark:text-blue-400 space-y-1">
+                      <div v-for="player in match.team1" :key="player.id">{{ player.name }}</div>
                     </div>
                   </div>
 
@@ -97,8 +97,8 @@
 
                   <!-- Team 2 -->
                   <div class="text-left">
-                    <div class="font-bold text-indigo-600 dark:text-indigo-400">
-                      {{ getTeamNames(match.team2) }}
+                    <div class="font-bold text-indigo-600 dark:text-indigo-400 space-y-1">
+                      <div v-for="player in match.team2" :key="player.id">{{ player.name }}</div>
                     </div>
                   </div>
                 </div>
@@ -214,10 +214,6 @@ const validateSelection = () => {
   } else {
     selectionError.value = '';
   }
-};
-
-const getTeamNames = (team: PlayerInfo[]) => {
-  return team.map(player => player.name).join(' & ');
 };
 
 const formatDate = (timestamp: string) => {

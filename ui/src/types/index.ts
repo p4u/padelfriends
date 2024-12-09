@@ -11,14 +11,20 @@ export interface Player {
   created_at: string;
 }
 
+export interface PlayerInfo {
+  id: string;
+  name: string;
+}
+
 export interface Match {
   id: string;
-  group_id: string;
-  players: string[];
+  group_name: string;
+  timestamp: string;
+  team1: PlayerInfo[];
+  team2: PlayerInfo[];
   score_team1?: number;
   score_team2?: number;
   status: 'pending' | 'completed';
-  created_at: string;
 }
 
 export interface Statistics {

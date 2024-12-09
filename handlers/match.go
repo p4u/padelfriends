@@ -45,17 +45,13 @@ func (h *MatchHandler) CreateMatch(w http.ResponseWriter, r *http.Request) {
 		pids = append(pids, objID)
 	}
 
-	m, d, err := h.MatchService.CreateMatch(r.Context(), groupName, pids)
+	match, err := h.MatchService.CreateMatch(r.Context(), groupName, pids)
 	if err != nil {
 		http.Error(w, "Error creating match: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	res := map[string]interface{}{
-		"match":   m,
-		"details": d,
-	}
-	writeJSON(w, http.StatusCreated, res)
+	writeJSON(w, http.StatusCreated, match)
 }
 
 // POST /api/group/{name}/matches/{match_id}/results?password=SECRET

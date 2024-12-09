@@ -37,6 +37,24 @@ type MatchDetail struct {
 	ScoreTeam2 int                  `bson:"score_team2" json:"score_team2"`
 }
 
+// MatchResponse combines Match and MatchDetail with player names for API responses
+type MatchResponse struct {
+	ID         primitive.ObjectID `json:"id"`
+	GroupName  string             `json:"group_name"`
+	Timestamp  time.Time          `json:"timestamp"`
+	Team1      []PlayerInfo       `json:"team1"`
+	Team2      []PlayerInfo       `json:"team2"`
+	ScoreTeam1 int                `json:"score_team1"`
+	ScoreTeam2 int                `json:"score_team2"`
+	Status     string             `json:"status"`
+}
+
+// PlayerInfo contains the essential player information for responses
+type PlayerInfo struct {
+	ID   primitive.ObjectID `json:"id"`
+	Name string             `json:"name"`
+}
+
 // HashPassword hashes the given password using bcrypt.
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

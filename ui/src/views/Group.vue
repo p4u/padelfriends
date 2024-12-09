@@ -2,10 +2,10 @@
   <div class="max-w-4xl mx-auto space-y-8">
     <!-- Group Header -->
     <div class="modern-container bg-white dark:bg-gray-800">
-      <h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
-        🎾 {{ currentGroup?.name }} 🏸
+      <h1 class="text-4xl font-bold text-center text-gray-900 dark:text-white mb-8 border-b pb-4">
+        {{ currentGroup?.name }}
       </h1>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap justify-center gap-2">
         <button 
           v-for="tab in tabs" 
           :key="tab.value"
@@ -56,8 +56,8 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 const tabs = [
-  { value: 'players', label: 'Players', icon: '🏃' },
-  { value: 'matches', label: 'Matches', icon: '🎾' },
+  { value: 'players', label: 'Players', icon: '👥' },
+  { value: 'matches', label: 'Matches', icon: '🎯' },
   { value: 'statistics', label: 'Stats', icon: '📊' }
 ];
 
@@ -141,8 +141,8 @@ const createMatch = async (playerIds: string[]) => {
 };
 
 const showSubmitScore = async (match: Match) => {
-  const score1 = prompt('🎾 Enter score for Team 1:');
-  const score2 = prompt('🎾 Enter score for Team 2:');
+  const score1 = prompt('Enter score for Team 1:');
+  const score2 = prompt('Enter score for Team 2:');
   
   if (score1 === null || score2 === null) return;
   
@@ -150,7 +150,7 @@ const showSubmitScore = async (match: Match) => {
   const scoreTeam2 = parseInt(score2);
   
   if (isNaN(scoreTeam1) || isNaN(scoreTeam2)) {
-    alert('❌ Please enter valid scores');
+    alert('Please enter valid scores');
     return;
   }
   
@@ -167,7 +167,7 @@ const showSubmitScore = async (match: Match) => {
       groupStore.loadStatistics()
     ]);
   } catch (error) {
-    alert('❌ Failed to submit match results');
+    alert('Failed to submit match results');
   }
 };
 </script>

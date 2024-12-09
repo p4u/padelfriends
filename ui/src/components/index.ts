@@ -5,3 +5,4 @@ export { default as GroupList } from './GroupList.vue';
 export { default as SavedGroupList } from './SavedGroupList.vue';
 export { default as CreateGroupForm } from './CreateGroupForm.vue';
 export { default as InstallButton } from './InstallButton.vue';
+export { default as TopMenu } from './TopMenu.vue';

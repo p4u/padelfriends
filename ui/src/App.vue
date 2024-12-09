@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen bg-gradient-to-b from-background to-gray-50 dark:from-background dark:to-gray-900 flex flex-col">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-grow">
+    <TopMenu />
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-grow mt-16">
       <router-view />
     </div>
     <footer class="w-full py-4 text-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
@@ -13,5 +14,5 @@
 </template>
 
 <script setup lang="ts">
-import { InstallButton } from './components';
+import { InstallButton, TopMenu } from './components';
 </script>

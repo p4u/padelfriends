@@ -1,128 +1,126 @@
 import { defineStore } from 'pinia';
-import { ref, markRaw } from 'vue';
-import type { Group, Player, Match, Statistics } from '../types';
+import { ref } from 'vue';
 import { groupApi } from '../api';
+import type { Group, Player, Match, Statistics } from '../types';
+
+interface SavedGroup {
+  name: string;
+  password: string;
+}
 
 export const useGroupStore = defineStore('group', () => {
   const currentGroup = ref<Group | null>(null);
+  const groupPassword = ref<string>('');
   const players = ref<Player[]>([]);
   const matches = ref<Match[]>([]);
   const statistics = ref<Statistics[]>([]);
-  const groupPassword = ref<string>('');
-  const loading = ref(false);
-  const error = ref<string | null>(null);
 
-  const setGroup = (group: Group, password: string) => {
-    currentGroup.value = markRaw({ ...group });
-    groupPassword.value = password;
-    localStorage.setItem('padel-friends-group', JSON.stringify({ group, password }));
-  };
-
-  const clearGroup = () => {
-    currentGroup.value = null;
-    groupPassword.value = '';
-    players.value = [];
-    matches.value = [];
-    statistics.value = [];
-    localStorage.removeItem('padel-friends-group');
-  };
-
-  const restoreGroupFromStorage = async (): Promise<boolean> => {
-    const storedData = localStorage.getItem('padel-friends-group');
-    if (!storedData) return false;
-
+  const setGroup = async (name: string, password: string) => {
     try {
-      const { group, password } = JSON.parse(storedData);
-      if (!group || !password) return false;
+      const response = await groupApi.getGroup(name, password);
+      currentGroup.value = response.data;
+      groupPassword.value = password;
 
-      try {
-        const response = await groupApi.getByName(group.name, password);
-        setGroup(response.data, password);
-        return true;
-      } catch {
-        clearGroup();
-        return false;
+      // Save to localStorage
+      const savedGroups = getSavedGroups();
+      const existingIndex = savedGroups.findIndex((g: SavedGroup) => g.name === name);
+      
+      if (existingIndex !== -1) {
+        savedGroups[existingIndex] = { name, password };
+      } else {
+        savedGroups.push({ name, password });
       }
-    } catch {
-      clearGroup();
+      
+      localStorage.setItem('savedGroups', JSON.stringify(savedGroups));
+      
+      return true;
+    } catch (error) {
+      console.error('Error setting group:', error);
       return false;
     }
   };
 
-  const clearError = () => {
-    error.value = null;
-  };
-
-  const loadPlayers = async () => {
-    if (!currentGroup.value) return;
-    loading.value = true;
-    error.value = null;
-    
+  const getSavedGroups = (): SavedGroup[] => {
     try {
-      const response = await groupApi.getPlayers(currentGroup.value.name, groupPassword.value);
-      players.value = Array.isArray(response.data) ? markRaw([...response.data]) : [];
-    } catch (err) {
-      error.value = 'Failed to load players';
-      console.error('Failed to load players:', err);
-    } finally {
-      loading.value = false;
+      const savedGroupsStr = localStorage.getItem('savedGroups');
+      return savedGroupsStr ? JSON.parse(savedGroupsStr) : [];
+    } catch (error) {
+      console.error('Error parsing saved groups:', error);
+      return [];
     }
   };
 
-  const loadMatches = async (page?: number, pageSize?: number) => {
-    if (!currentGroup.value) return;
-    loading.value = true;
-    error.value = null;
+  const restoreGroupFromStorage = async () => {
+    const savedGroups = getSavedGroups();
+    const currentPath = window.location.pathname;
+    const groupName = currentPath.split('/').pop();
+
+    if (groupName) {
+      const savedGroup = savedGroups.find((g: SavedGroup) => g.name === groupName);
+      if (savedGroup) {
+        return await setGroup(savedGroup.name, savedGroup.password);
+      }
+    }
+    return false;
+  };
+
+  const loadPlayers = async () => {
+    if (!currentGroup.value || !groupPassword.value) return;
     
     try {
-      let response;
-      if (page !== undefined && pageSize !== undefined) {
-        // Get paginated matches for match history view
-        response = await groupApi.getMatches(currentGroup.value.name, groupPassword.value, page, pageSize);
-        matches.value = Array.isArray(response.data.matches) ? markRaw([...response.data.matches]) : [];
-      } else {
-        // Get recent matches for group view
-        response = await groupApi.getRecentMatches(currentGroup.value.name, groupPassword.value);
-        matches.value = Array.isArray(response.data) ? markRaw([...response.data]) : [];
-      }
-    } catch (err) {
-      error.value = 'Failed to load matches';
-      console.error('Failed to load matches:', err);
-    } finally {
-      loading.value = false;
+      const response = await groupApi.getPlayers(
+        currentGroup.value.name,
+        groupPassword.value
+      );
+      players.value = response.data;
+    } catch (error) {
+      console.error('Error loading players:', error);
+      throw error;
+    }
+  };
+
+  const loadMatches = async (page: number = 1, pageSize: number = 10) => {
+    if (!currentGroup.value || !groupPassword.value) return;
+    
+    try {
+      const response = await groupApi.getMatches(
+        currentGroup.value.name,
+        groupPassword.value,
+        page,
+        pageSize
+      );
+      matches.value = response.data.matches;
+    } catch (error) {
+      console.error('Error loading matches:', error);
+      throw error;
     }
   };
 
   const loadStatistics = async () => {
-    if (!currentGroup.value) return;
-    loading.value = true;
-    error.value = null;
+    if (!currentGroup.value || !groupPassword.value) return;
     
     try {
-      const response = await groupApi.getStatistics(currentGroup.value.name, groupPassword.value);
-      statistics.value = markRaw([...response.data]);
-    } catch (err) {
-      error.value = 'Failed to load statistics';
-      console.error('Failed to load statistics:', err);
-    } finally {
-      loading.value = false;
+      const response = await groupApi.getStatistics(
+        currentGroup.value.name,
+        groupPassword.value
+      );
+      statistics.value = response.data;
+    } catch (error) {
+      console.error('Error loading statistics:', error);
+      throw error;
     }
   };
 
   return {
     currentGroup,
+    groupPassword,
     players,
     matches,
     statistics,
-    groupPassword,
-    loading,
-    error,
     setGroup,
-    clearGroup,
     restoreGroupFromStorage,
     loadPlayers,
     loadMatches,
-    loadStatistics,
-    clearError,
+    loadStatistics
   };
 });

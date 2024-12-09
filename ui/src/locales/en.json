@@ -1,0 +1,100 @@
+{
+  "app": {
+    "name": "Padel Friends",
+    "tagline": "Connect, Play, Compete"
+  },
+  "navigation": {
+    "matches": "Matches",
+    "players": "Players",
+    "statistics": "Statistics"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Spanish",
+    "ca": "Catalan"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "save": "Save",
+    "loading": "Loading...",
+    "error": "An error has occurred",
+    "success": "Operation completed successfully",
+    "confirm": "Confirm",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {current} of {total}",
+    "connected": "Connected",
+    "disconnected": "Disconnected"
+  },
+  "auth": {
+    "password": "Password",
+    "enterPassword": "Enter password for group"
+  },
+  "groups": {
+    "create": "Create Group",
+    "join": "Join Group",
+    "name": "Group Name",
+    "recentGroups": "Recent Groups",
+    "availableGroups": "Available Groups",
+    "createNew": "Create New Group",
+    "noGroups": "No groups available",
+    "noSavedGroups": "No recent groups"
+  },
+  "matches": {
+    "newMatch": "New Match",
+    "startSingleMatch": "Start single match",
+    "startTournament": "Start tournament",
+    "matchHistory": "Match History",
+    "team1": "Team 1",
+    "team2": "Team 2",
+    "selectPlayer": "Select Player",
+    "submitScore": "Submit Score",
+    "cancelMatch": "Cancel Match",
+    "confirmCancel": "Are you sure you want to cancel this match?",
+    "vs": "vs",
+    "score": "Score",
+    "selectPlayerNumber": "Select Player {number}"
+  },
+  "tournament": {
+    "setup": "Tournament Setup",
+    "selectPlayers": "Select Players",
+    "numberOfMatches": "Number of Matches",
+    "selectedPlayers": "Selected Players",
+    "playerMultiple": "Number of players must be a multiple of 4",
+    "generateMatches": "Generate Matches"
+  },
+  "players": {
+    "addPlayer": "Add Player",
+    "playerName": "Player Name",
+    "selectPlayer": "Select Player",
+    "playerList": "Player List",
+    "noPlayers": "No players yet"
+  },
+  "statistics": {
+    "title": "Statistics",
+    "games": "Games",
+    "points": "Points",
+    "totalGames": "Total Games",
+    "gamesWon": "Games Won",
+    "gamesLost": "Games Lost",
+    "winRate": "Win %",
+    "lossRate": "Loss %",
+    "totalPoints": "Total Points",
+    "pointsWon": "Points Won",
+    "pointsLost": "Points Lost",
+    "noStats": "No statistics available yet"
+  },
+  "errors": {
+    "invalidPassword": "Invalid password",
+    "groupNotFound": "Group not found",
+    "failedToLoad": "Failed to load data",
+    "failedToCreate": "Failed to create",
+    "failedToUpdate": "Failed to update",
+    "failedToDelete": "Failed to delete",
+    "networkError": "Network error",
+    "duplicatePlayer": "This player already exists"
+  }
+}

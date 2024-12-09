@@ -15,7 +15,7 @@
             activeTab === tab.value ? 'bg-primary ring-2 ring-primary ring-offset-2' : 'bg-gray-500'
           ]"
         >
-          {{ tab.icon }} {{ tab.label }}
+          {{ tab.icon }} {{ t(`navigation.${tab.value}`) }}
         </button>
       </div>
     </div>
@@ -23,10 +23,10 @@
     <!-- Content Tabs -->
     <div class="modern-container bg-white dark:bg-gray-800">
       <div v-if="loading" class="text-center text-gray-900 dark:text-white">
-        Loading... 🔄
+        {{ t('common.loading') }}
       </div>
       <div v-else-if="error" class="text-center text-red-500">
-        {{ error }} 😢
+        {{ error }}
       </div>
       <component
         v-else
@@ -37,6 +37,15 @@
         @submit-score="showSubmitScore"
       />
     </div>
+
+    <!-- Submit Score Modal -->
+    <SubmitScore
+      v-if="showScoreModal"
+      :show="showScoreModal"
+      :match="selectedMatch"
+      @close="closeSubmitScore"
+      @submit="submitScore"
+    />
   </div>
 </template>
 
@@ -44,16 +53,21 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useGroupStore } from '../stores/group';
+import { useI18n } from '../i18n';
 import { groupApi } from '../api';
-import { PlayerList, MatchList, StatisticsList } from '../components';
+import { PlayerList, MatchList, StatisticsList, SubmitScore } from '../components';
 import type { Match } from '../types';
 
 const route = useRoute();
 const router = useRouter();
 const groupStore = useGroupStore();
-const activeTab = ref('matches'); // Changed default tab to matches
+const { t } = useI18n();
+
+const activeTab = ref('matches');
 const loading = ref(false);
 const error = ref<string | null>(null);
+const showScoreModal = ref(false);
+const selectedMatch = ref<Match | null>(null);
 
 const tabs = [
   { value: 'matches', label: 'Matches', icon: '🎾' },
@@ -103,7 +117,7 @@ onMounted(async () => {
       groupStore.loadStatistics()
     ]);
   } catch (err) {
-    error.value = 'Failed to load group data';
+    error.value = t('errors.failedToLoad');
     console.error('Failed to load group data:', err);
   } finally {
     loading.value = false;
@@ -121,7 +135,7 @@ const addPlayer = async (name: string) => {
     );
     await groupStore.loadPlayers();
   } catch (error) {
-    alert('Failed to add player');
+    alert(t('errors.failedToCreate'));
   }
 };
 
@@ -136,28 +150,27 @@ const createMatch = async (playerIds: string[]) => {
     );
     await groupStore.loadMatches();
   } catch (error) {
-    alert('Failed to create match');
+    alert(t('errors.failedToCreate'));
   }
 };
 
-const showSubmitScore = async (match: Match) => {
-  const score1 = prompt('Enter score for Team 1:');
-  const score2 = prompt('Enter score for Team 2:');
-  
-  if (score1 === null || score2 === null) return;
-  
-  const scoreTeam1 = parseInt(score1);
-  const scoreTeam2 = parseInt(score2);
-  
-  if (isNaN(scoreTeam1) || isNaN(scoreTeam2)) {
-    alert('Please enter valid scores');
-    return;
-  }
+const showSubmitScore = (match: Match) => {
+  selectedMatch.value = match;
+  showScoreModal.value = true;
+};
+
+const closeSubmitScore = () => {
+  showScoreModal.value = false;
+  selectedMatch.value = null;
+};
+
+const submitScore = async (scoreTeam1: number, scoreTeam2: number) => {
+  if (!selectedMatch.value) return;
   
   try {
     await groupApi.submitResults(
-      match.group_name,
-      match.id,
+      selectedMatch.value.group_name,
+      selectedMatch.value.id,
       groupStore.groupPassword,
       scoreTeam1,
       scoreTeam2
@@ -166,8 +179,9 @@ const showSubmitScore = async (match: Match) => {
       groupStore.loadMatches(),
       groupStore.loadStatistics()
     ]);
+    closeSubmitScore();
   } catch (error) {
-    alert('Failed to submit match results');
+    alert(t('errors.failedToUpdate'));
   }
 };
 </script>

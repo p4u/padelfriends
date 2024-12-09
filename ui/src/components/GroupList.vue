@@ -1,50 +1,80 @@
 <template>
-  <div class="space-y-2">
-    <div v-if="loading" class="text-center text-gray-900 dark:text-white">
-      Loading groups... 🔄
+  <div class="space-y-4">
+    <div v-if="!groups.length" class="text-center text-gray-500 dark:text-gray-400">
+      {{ t('groups.noGroups') }}
     </div>
-    <div v-else-if="error" class="text-center text-red-500">
-      {{ error }} 😢
-    </div>
-    <div v-else-if="groups.length === 0" class="text-center text-gray-900 dark:text-white">
-      No groups available 😢
-    </div>
-    <div v-else class="space-y-2">
-      <div
-        v-for="group in groups"
-        :key="group?.id || 'unknown'"
-        class="modern-container bg-white dark:bg-gray-800 p-4 cursor-pointer hover:border-primary transition-colors"
-        @click="handleGroupSelect(group)"
+    <div v-else class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+      <div 
+        v-for="group in groups" 
+        :key="group.name"
+        class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-4"
       >
-        <span class="text-gray-900 dark:text-white">{{ group?.name || 'Unnamed Group' }}</span>
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-gray-900 dark:text-white">
+            {{ group.name }}
+          </h3>
+          <span class="text-sm text-gray-500 dark:text-gray-400">
+            {{ formatDate(group.created_at) }}
+          </span>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <input 
+            v-model="passwords[group.name]"
+            type="password"
+            :placeholder="t('auth.password')"
+            class="modern-input flex-1 text-gray-900 dark:text-white bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
+          />
+          <button 
+            @click="joinGroup(group.name)"
+            class="modern-button bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+          >
+            {{ t('groups.join') }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref } from 'vue';
+import { useI18n } from '../i18n';
 import type { Group } from '../types';
 
 const props = defineProps<{
   groups: Group[];
-  loading: boolean;
-  error: string | null;
 }>();
 
 const emit = defineEmits<{
-  (e: 'select', group: Group): void;
+  (e: 'join-group', name: string, password: string): void;
 }>();
 
-const handleGroupSelect = (group: Group) => {
-  if (!group || !group.name) {
-    console.error('Invalid group data:', group);
-    return;
+const { t } = useI18n();
+const passwords = ref<{ [key: string]: string }>({});
+
+const formatDate = (timestamp: string) => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return t('common.today') + ', ' + date.toLocaleTimeString();
+  } else if (diffDays === 1) {
+    return t('common.yesterday') + ', ' + date.toLocaleTimeString();
+  } else {
+    return date.toLocaleDateString();
   }
-  emit('select', group);
 };
 
-onMounted(() => {
-  console.log('GroupList mounted with groups:', props.groups);
-});
+const joinGroup = (name: string) => {
+  const password = passwords.value[name];
+  if (!password) {
+    alert(t('errors.invalidPassword'));
+    return;
+  }
+  emit('join-group', name, password);
+  passwords.value[name] = '';
+};
 </script>

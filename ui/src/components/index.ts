@@ -1,6 +1,10 @@
 export { default as PlayerList } from './PlayerList.vue';
 export { default as MatchList } from './MatchList.vue';
 export { default as StatisticsList } from './StatisticsList.vue';
+export { default as SubmitScore } from './SubmitScore.vue';
+export { default as Tournament } from './Tournament.vue';
+export { default as LanguageSelector } from './LanguageSelector.vue';
+export { default as CreateGroupForm } from './CreateGroupForm.vue';
 export { default as GroupList } from './GroupList.vue';
 export { default as SavedGroupList } from './SavedGroupList.vue';
-export { default as CreateGroupForm } from './CreateGroupForm.vue';
+export { default as HealthIndicator } from './HealthIndicator.vue';

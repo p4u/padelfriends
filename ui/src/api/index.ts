@@ -1,99 +1,71 @@
 import axios from 'axios';
-import type { CreateMatchPayload, CreateBatchMatchesPayload, SubmitScorePayload } from '../types';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    'Content-Type': 'application/json'
   }
 });
 
-// Add response interceptor for better error handling
-api.interceptors.response.use(
-  response => response,
-  error => {
-    let errorMessage = 'An unexpected error occurred';
-    
-    if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          errorMessage = 'Unauthorized access';
-          break;
-        case 404:
-          errorMessage = 'Resource not found';
-          break;
-        case 500:
-          errorMessage = 'Server error';
-          break;
-      }
-    } else if (error.request) {
-      errorMessage = 'Network error - please check your connection';
-    }
-    
-    return Promise.reject(errorMessage);
-  }
-);
-
 export const groupApi = {
-  create: (name: string, password: string) => 
-    api.post('/group', { name, password }),
+  getGroups: () => api.get('/groups'),
   
-  list: () => api.get('/groups'),
+  getGroup: (name: string, password: string) => 
+    api.get(`/groups/${name}`, { headers: { 'X-Group-Password': password } }),
   
-  getByName: (name: string, password: string) =>
-    api.get(`/group/byname/${name}`, { params: { password } }),
+  createGroup: (name: string, password: string) => 
+    api.post('/groups', { name, password }),
   
-  addPlayer: (groupId: string, password: string, name: string) =>
-    api.post(`/group/${groupId}/players`, { name }, { params: { password } }),
-  
-  getPlayers: (groupId: string, password: string) =>
-    api.get(`/group/${groupId}/players`, { params: { password } }),
-  
-  createMatch: (groupId: string, password: string, playerIds: string[]) =>
-    api.post(`/group/${groupId}/matches`, 
-      { player_ids: playerIds }, 
-      { params: { password } }
-    ),
-
-  createBatchMatches: (groupId: string, password: string, matches: string[][]) =>
-    api.post(`/group/${groupId}/matches/batch`,
-      { matches },
-      { params: { password } }
+  addPlayer: (groupName: string, password: string, playerName: string) => 
+    api.post(`/groups/${groupName}/players`, 
+      { name: playerName },
+      { headers: { 'X-Group-Password': password } }
     ),
   
-  cancelMatch: (groupId: string, matchId: string, password: string) =>
-    api.post(`/group/${groupId}/matches/${matchId}/cancel`,
-      {},
-      { params: { password } }
+  getPlayers: (groupName: string, password: string) => 
+    api.get(`/groups/${groupName}/players`,
+      { headers: { 'X-Group-Password': password } }
     ),
-
-  submitResults: (groupId: string, matchId: string, password: string, scoreTeam1: number, scoreTeam2: number) =>
-    api.post(`/group/${groupId}/matches/${matchId}/results`, 
+  
+  getMatches: (groupName: string, password: string, page: number = 1, pageSize: number = 10) => 
+    api.get(`/groups/${groupName}/matches`,
       { 
-        score_team1: parseInt(String(scoreTeam1)), 
-        score_team2: parseInt(String(scoreTeam2)) 
-      }, 
-      { params: { password } }
+        headers: { 'X-Group-Password': password },
+        params: { page, page_size: pageSize }
+      }
     ),
   
-  getRecentMatches: (groupId: string, password: string) =>
-    api.get(`/group/${groupId}/matches`, { 
-      params: { 
-        password,
-        recent: true
-      } 
-    }),
-
-  getMatches: (groupId: string, password: string, page: number = 1, pageSize: number = 10) =>
-    api.get(`/group/${groupId}/matches`, { 
-      params: { 
-        password,
-        page,
-        pageSize
-      } 
-    }),
+  createMatch: (groupName: string, password: string, playerIds: string[]) => 
+    api.post(`/groups/${groupName}/matches`,
+      { player_ids: playerIds },
+      { headers: { 'X-Group-Password': password } }
+    ),
   
-  getStatistics: (groupId: string, password: string) =>
-    api.get(`/group/${groupId}/statistics`, { params: { password } }),
+  createBatchMatches: (groupName: string, password: string, matches: string[][]) => 
+    api.post(`/groups/${groupName}/matches/batch`,
+      { matches },
+      { headers: { 'X-Group-Password': password } }
+    ),
+  
+  submitResults: (groupName: string, matchId: string, password: string, scoreTeam1: number, scoreTeam2: number) => 
+    api.post(`/groups/${groupName}/matches/${matchId}/results`,
+      { score_team1: scoreTeam1, score_team2: scoreTeam2 },
+      { headers: { 'X-Group-Password': password } }
+    ),
+  
+  cancelMatch: (groupName: string, matchId: string, password: string) => 
+    api.delete(`/groups/${groupName}/matches/${matchId}`,
+      { headers: { 'X-Group-Password': password } }
+    ),
+  
+  getStatistics: (groupName: string, password: string) => 
+    api.get(`/groups/${groupName}/statistics`,
+      { headers: { 'X-Group-Password': password } }
+    )
+};
+
+export const healthApi = {
+  check: () => api.get('/health')
 };

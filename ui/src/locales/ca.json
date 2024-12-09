@@ -1,0 +1,100 @@
+{
+  "app": {
+    "name": "Padel Friends",
+    "tagline": "Connecta, Juga, Competeix"
+  },
+  "navigation": {
+    "matches": "Partits",
+    "players": "Jugadors",
+    "statistics": "Estadístiques"
+  },
+  "languages": {
+    "en": "Anglès",
+    "es": "Espanyol",
+    "ca": "Català"
+  },
+  "common": {
+    "cancel": "Cancel·lar",
+    "submit": "Enviar",
+    "save": "Desar",
+    "loading": "Carregant...",
+    "error": "S'ha produït un error",
+    "success": "Operació completada amb èxit",
+    "confirm": "Confirmar",
+    "today": "Avui",
+    "yesterday": "Ahir",
+    "previous": "Anterior",
+    "next": "Següent",
+    "page": "Pàgina {current} de {total}",
+    "connected": "Connectat",
+    "disconnected": "Desconnectat"
+  },
+  "auth": {
+    "password": "Contrasenya",
+    "enterPassword": "Introdueix la contrasenya del grup"
+  },
+  "groups": {
+    "create": "Crear Grup",
+    "join": "Unir-se al Grup",
+    "name": "Nom del Grup",
+    "recentGroups": "Grups Recents",
+    "availableGroups": "Grups Disponibles",
+    "createNew": "Crear Nou Grup",
+    "noGroups": "No hi ha grups disponibles",
+    "noSavedGroups": "No hi ha grups recents"
+  },
+  "matches": {
+    "newMatch": "Nou Partit",
+    "startSingleMatch": "Començar partit individual",
+    "startTournament": "Començar torneig",
+    "matchHistory": "Historial de Partits",
+    "team1": "Equip 1",
+    "team2": "Equip 2",
+    "selectPlayer": "Seleccionar Jugador",
+    "submitScore": "Enviar Puntuació",
+    "cancelMatch": "Cancel·lar Partit",
+    "confirmCancel": "Estàs segur que vols cancel·lar aquest partit?",
+    "vs": "contra",
+    "score": "Puntuació",
+    "selectPlayerNumber": "Seleccionar Jugador {number}"
+  },
+  "tournament": {
+    "setup": "Configuració del Torneig",
+    "selectPlayers": "Seleccionar Jugadors",
+    "numberOfMatches": "Nombre de Partits",
+    "selectedPlayers": "Jugadors Seleccionats",
+    "playerMultiple": "El nombre de jugadors ha de ser múltiple de 4",
+    "generateMatches": "Generar Partits"
+  },
+  "players": {
+    "addPlayer": "Afegir Jugador",
+    "playerName": "Nom del Jugador",
+    "selectPlayer": "Seleccionar Jugador",
+    "playerList": "Llista de Jugadors",
+    "noPlayers": "Encara no hi ha jugadors"
+  },
+  "statistics": {
+    "title": "Estadístiques",
+    "games": "Partits",
+    "points": "Punts",
+    "totalGames": "Total Partits",
+    "gamesWon": "Partits Guanyats",
+    "gamesLost": "Partits Perduts",
+    "winRate": "% Victòries",
+    "lossRate": "% Derrotes",
+    "totalPoints": "Total Punts",
+    "pointsWon": "Punts Guanyats",
+    "pointsLost": "Punts Perduts",
+    "noStats": "Encara no hi ha estadístiques disponibles"
+  },
+  "errors": {
+    "invalidPassword": "Contrasenya incorrecta",
+    "groupNotFound": "Grup no trobat",
+    "failedToLoad": "Error en carregar les dades",
+    "failedToCreate": "Error en crear",
+    "failedToUpdate": "Error en actualitzar",
+    "failedToDelete": "Error en eliminar",
+    "networkError": "Error de connexió",
+    "duplicatePlayer": "Aquest jugador ja existeix"
+  }
+}

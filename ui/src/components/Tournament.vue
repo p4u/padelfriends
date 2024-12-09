@@ -3,9 +3,9 @@
     <!-- Tournament Button -->
     <button 
       @click="showModal = true"
-      class="w-full p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+      class="w-full mt-8 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow"
     >
-      Start tournament
+      {{ t('matches.startTournament') }}
     </button>
 
     <!-- Modal -->
@@ -14,7 +14,9 @@
         <div class="space-y-6">
           <!-- Header -->
           <div class="flex justify-between items-center">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Tournament Setup</h3>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+              {{ t('tournament.setup') }}
+            </h3>
             <button @click="showModal = false" class="text-gray-500 hover:text-gray-700 dark:text-gray-400">
               ❌
             </button>
@@ -27,7 +29,9 @@
 
           <!-- Player Selection -->
           <div class="space-y-4">
-            <h4 class="font-medium text-gray-900 dark:text-white">Select Players</h4>
+            <h4 class="font-medium text-gray-900 dark:text-white">
+              {{ t('tournament.selectPlayers') }}
+            </h4>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <label 
                 v-for="player in players" 
@@ -44,14 +48,17 @@
               </label>
             </div>
             <div class="text-sm text-gray-500">
-              Selected: {{ selectedPlayerIds.length }} players (must be a multiple of 4)
+              {{ t('tournament.selectedPlayers') }}: {{ selectedPlayerIds.length }}
+              <span v-if="!isValidPlayerCount" class="text-red-500">
+                ({{ t('tournament.playerMultiple') }})
+              </span>
             </div>
           </div>
 
           <!-- Number of Matches -->
           <div class="space-y-2">
             <label class="block font-medium text-gray-900 dark:text-white">
-              Number of Matches
+              {{ t('tournament.numberOfMatches') }}
             </label>
             <input 
               type="number" 
@@ -68,14 +75,14 @@
               @click="showModal = false"
               class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </button>
             <button 
               @click="generateMatches"
               :disabled="!isValid"
               class="px-4 py-2 text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Start tournament
+              {{ t('tournament.generateMatches') }}
             </button>
           </div>
         </div>
@@ -86,6 +93,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from '../i18n';
 import type { Player } from '../types';
 
 const props = defineProps<{
@@ -96,6 +104,7 @@ const emit = defineEmits<{
   (e: 'create-matches', matches: Array<string[]>): void;
 }>();
 
+const { t } = useI18n();
 const showModal = ref(false);
 const selectedPlayerIds = ref<string[]>([]);
 const numberOfMatches = ref(1);
@@ -209,7 +218,7 @@ const generateMatches = () => {
     numberOfMatches.value = 1;
     error.value = '';
   } catch (err) {
-    error.value = 'Failed to generate matches. Please try again.';
+    error.value = t('errors.failedToCreate');
   }
 };
 </script>

@@ -1,0 +1,100 @@
+{
+  "app": {
+    "name": "Padel Friends",
+    "tagline": "Conecta, Juega, Compite"
+  },
+  "navigation": {
+    "matches": "Partidos",
+    "players": "Jugadores",
+    "statistics": "Estadísticas"
+  },
+  "languages": {
+    "en": "Inglés",
+    "es": "Español",
+    "ca": "Catalán"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "save": "Guardar",
+    "loading": "Cargando...",
+    "error": "Se ha producido un error",
+    "success": "Operación completada con éxito",
+    "confirm": "Confirmar",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Página {current} de {total}",
+    "connected": "Conectado",
+    "disconnected": "Desconectado"
+  },
+  "auth": {
+    "password": "Contraseña",
+    "enterPassword": "Introduce la contraseña del grupo"
+  },
+  "groups": {
+    "create": "Crear Grupo",
+    "join": "Unirse al Grupo",
+    "name": "Nombre del Grupo",
+    "recentGroups": "Grupos Recientes",
+    "availableGroups": "Grupos Disponibles",
+    "createNew": "Crear Nuevo Grupo",
+    "noGroups": "No hay grupos disponibles",
+    "noSavedGroups": "No hay grupos recientes"
+  },
+  "matches": {
+    "newMatch": "Nuevo Partido",
+    "startSingleMatch": "Comenzar partido individual",
+    "startTournament": "Comenzar torneo",
+    "matchHistory": "Historial de Partidos",
+    "team1": "Equipo 1",
+    "team2": "Equipo 2",
+    "selectPlayer": "Seleccionar Jugador",
+    "submitScore": "Enviar Puntuación",
+    "cancelMatch": "Cancelar Partido",
+    "confirmCancel": "¿Estás seguro de que quieres cancelar este partido?",
+    "vs": "contra",
+    "score": "Puntuación",
+    "selectPlayerNumber": "Seleccionar Jugador {number}"
+  },
+  "tournament": {
+    "setup": "Configuración del Torneo",
+    "selectPlayers": "Seleccionar Jugadores",
+    "numberOfMatches": "Número de Partidos",
+    "selectedPlayers": "Jugadores Seleccionados",
+    "playerMultiple": "El número de jugadores debe ser múltiplo de 4",
+    "generateMatches": "Generar Partidos"
+  },
+  "players": {
+    "addPlayer": "Añadir Jugador",
+    "playerName": "Nombre del Jugador",
+    "selectPlayer": "Seleccionar Jugador",
+    "playerList": "Lista de Jugadores",
+    "noPlayers": "Aún no hay jugadores"
+  },
+  "statistics": {
+    "title": "Estadísticas",
+    "games": "Partidos",
+    "points": "Puntos",
+    "totalGames": "Total Partidos",
+    "gamesWon": "Partidos Ganados",
+    "gamesLost": "Partidos Perdidos",
+    "winRate": "% Victorias",
+    "lossRate": "% Derrotas",
+    "totalPoints": "Total Puntos",
+    "pointsWon": "Puntos Ganados",
+    "pointsLost": "Puntos Perdidos",
+    "noStats": "Aún no hay estadísticas disponibles"
+  },
+  "errors": {
+    "invalidPassword": "Contraseña incorrecta",
+    "groupNotFound": "Grupo no encontrado",
+    "failedToLoad": "Error al cargar los datos",
+    "failedToCreate": "Error al crear",
+    "failedToUpdate": "Error al actualizar",
+    "failedToDelete": "Error al eliminar",
+    "networkError": "Error de conexión",
+    "duplicatePlayer": "Este jugador ya existe"
+  }
+}

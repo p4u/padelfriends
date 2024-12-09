@@ -1,19 +1,25 @@
 <template>
-  <div v-if="groups.length > 0" class="space-y-2">
-    <div 
-      v-for="group in sortedGroups" 
-      :key="group.id"
-      class="modern-container bg-white dark:bg-gray-800 p-4 cursor-pointer hover:border-primary transition-colors"
-      @click="$emit('select', group)"
-    >
-      <div class="flex justify-between items-center">
-        <span class="text-gray-900 dark:text-white font-medium">{{ group.name }}</span>
-        <button 
-          class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-          @click.stop="$emit('remove', group.id)"
-        >
-          ❌
-        </button>
+  <div class="space-y-4">
+    <div v-if="!savedGroups.length" class="text-center text-gray-500 dark:text-gray-400">
+      {{ t('groups.noSavedGroups') }}
+    </div>
+    <div v-else class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+      <div 
+        v-for="group in savedGroups" 
+        :key="group.name"
+        class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-4"
+      >
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-gray-900 dark:text-white">
+            {{ group.name }}
+          </h3>
+          <button 
+            @click="joinGroup(group)"
+            class="modern-button bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+          >
+            {{ t('groups.join') }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -21,26 +27,30 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from '../i18n';
 
 interface SavedGroup {
-  id: string;
   name: string;
   password: string;
-  lastAccessed: string;
 }
 
-const props = defineProps<{
-  groups: SavedGroup[];
+const emit = defineEmits<{
+  (e: 'join-group', name: string, password: string): void;
 }>();
 
-defineEmits<{
-  (e: 'select', group: SavedGroup): void;
-  (e: 'remove', id: string): void;
-}>();
+const { t } = useI18n();
 
-const sortedGroups = computed(() => 
-  [...props.groups].sort((a, b) => 
-    new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime()
-  )
-);
+const savedGroups = computed<SavedGroup[]>(() => {
+  try {
+    const savedGroupsStr = localStorage.getItem('savedGroups');
+    return savedGroupsStr ? JSON.parse(savedGroupsStr) : [];
+  } catch (error) {
+    console.error('Error parsing saved groups:', error);
+    return [];
+  }
+});
+
+const joinGroup = (group: SavedGroup) => {
+  emit('join-group', group.name, group.password);
+};
 </script>

@@ -4,7 +4,9 @@
       <div class="space-y-6">
         <!-- Header -->
         <div class="flex justify-between items-center">
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white">Submit Match Score</h3>
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+            {{ t('matches.submitScore') }}
+          </h3>
           <button @click="close" class="text-gray-500 hover:text-gray-700 dark:text-gray-400">
             ❌
           </button>
@@ -34,7 +36,7 @@
           <!-- VS Divider -->
           <div class="flex items-center justify-center">
             <span class="px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 font-bold text-gray-600 dark:text-gray-300">
-              VS
+              {{ t('matches.vs') }}
             </span>
           </div>
 
@@ -64,13 +66,13 @@
             @click="close"
             class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
-            Cancel
+            {{ t('common.cancel') }}
           </button>
           <button 
             @click="submit"
             class="px-4 py-2 text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg hover:shadow-lg"
           >
-            Submit Score
+            {{ t('common.submit') }}
           </button>
         </div>
       </div>
@@ -80,6 +82,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from '../i18n';
 import type { Match, PlayerInfo } from '../types';
 
 const props = defineProps<{
@@ -92,11 +95,13 @@ const emit = defineEmits<{
   (e: 'submit', scoreTeam1: number, scoreTeam2: number): void;
 }>();
 
+const { t } = useI18n();
 const scoreTeam1 = ref(0);
 const scoreTeam2 = ref(0);
 
 const getTeamNames = (team: PlayerInfo[]) => {
-  return team.map(player => player.name).join(' & ');
+  if (!team || !Array.isArray(team)) return '';
+  return team.map(player => player?.name || '').filter(Boolean).join(' & ');
 };
 
 const close = () => {

@@ -1,73 +1,72 @@
 <template>
   <div class="space-y-8">
-    <!-- Match Creation Section -->
-    <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg space-y-6">
-      <!-- Single Match Form -->
-      <form @submit.prevent="handleSubmit" class="space-y-4 bg-gradient-to-r from-blue-500 to-indigo-500 p-6 rounded-xl shadow-lg">
-        <h3 class="text-xl font-bold text-white mb-4">New Match</h3>
-        <div class="grid grid-cols-2 gap-6">
-          <div v-for="(team, index) in ['Team 1', 'Team 2']" :key="team" class="space-y-3">
-            <div class="flex items-center">
-              <span class="text-white font-medium">{{ team }}</span>
-            </div>
-            <div class="space-y-2">
-              <select
-                v-model="selectedPlayers[index][0]"
-                class="modern-input w-full text-gray-900 dark:text-white bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
-                required
-                @change="validateSelection"
+    <!-- Create Match Form -->
+    <form @submit.prevent="handleSubmit" class="space-y-4 bg-gradient-to-r from-blue-500 to-indigo-500 p-6 rounded-xl shadow-lg">
+      <h3 class="text-xl font-bold text-white mb-4">{{ t('matches.newMatch') }}</h3>
+      <div class="grid grid-cols-2 gap-6">
+        <div v-for="(team, index) in [1, 2]" :key="team" class="space-y-3">
+          <div class="flex items-center">
+            <span class="text-white font-medium">{{ t(`matches.team${team}`) }}</span>
+          </div>
+          <div class="space-y-2">
+            <select
+              :value="getPlayerValue(index-1, 0)"
+              @input="updatePlayer(index-1, 0, $event)"
+              class="modern-input w-full text-gray-900 dark:text-white bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
+              required
+            >
+              <option value="">{{ t('matches.selectPlayer') }} 1</option>
+              <option 
+                v-for="player in getAvailablePlayers(index-1, 0)" 
+                :key="player.id" 
+                :value="player.id"
               >
-                <option value="">Select Player 1</option>
-                <option 
-                  v-for="player in availablePlayersForSelect(index, 0)" 
-                  :key="player.id" 
-                  :value="player.id"
-                >
-                  {{ player.name }}
-                </option>
-              </select>
-              <select
-                v-model="selectedPlayers[index][1]"
-                class="modern-input w-full text-gray-900 dark:text-white bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
-                required
-                @change="validateSelection"
+                {{ player.name }}
+              </option>
+            </select>
+            <select
+              :value="getPlayerValue(index-1, 1)"
+              @input="updatePlayer(index-1, 1, $event)"
+              class="modern-input w-full text-gray-900 dark:text-white bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
+              required
+            >
+              <option value="">{{ t('matches.selectPlayer') }} 2</option>
+              <option 
+                v-for="player in getAvailablePlayers(index-1, 1)" 
+                :key="player.id" 
+                :value="player.id"
               >
-                <option value="">Select Player 2</option>
-                <option 
-                  v-for="player in availablePlayersForSelect(index, 1)" 
-                  :key="player.id" 
-                  :value="player.id"
-                >
-                  {{ player.name }}
-                </option>
-              </select>
-            </div>
+                {{ player.name }}
+              </option>
+            </select>
           </div>
         </div>
-        <div v-if="selectionError" class="text-red-200 text-sm mt-2">
-          {{ selectionError }}
-        </div>
-        <button 
-          type="submit" 
-          class="modern-button w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold"
-          :disabled="!!selectionError"
-        >
-          Start single match
-        </button>
-      </form>
+      </div>
+      <div v-if="selectionError" class="text-red-200 text-sm mt-2">
+        {{ selectionError }}
+      </div>
+      <button 
+        type="submit" 
+        class="modern-button w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold"
+        :disabled="!!selectionError"
+      >
+        {{ t('matches.startSingleMatch') }}
+      </button>
+    </form>
 
-      <!-- Tournament Generator -->
-      <Tournament 
-        :players="players"
-        @create-matches="handleRandomMatches"
-      />
-    </div>
+    <!-- Tournament Generator -->
+    <Tournament 
+      :players="players"
+      @create-matches="handleRandomMatches"
+    />
 
-    <!-- Matches List Section -->
+    <!-- Matches List -->
     <div class="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Match History</h2>
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            {{ t('matches.matchHistory') }}
+          </h2>
         </div>
         
         <div class="p-6 space-y-4">
@@ -92,7 +91,7 @@
 
                   <!-- VS -->
                   <div class="px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-600 font-bold text-gray-600 dark:text-gray-300">
-                    VS
+                    {{ t('matches.vs') }}
                   </div>
 
                   <!-- Team 2 -->
@@ -111,16 +110,16 @@
                   </div>
                   <div v-else-if="match.status === 'pending'" class="flex space-x-2">
                     <button
-                      @click="showSubmitScore(match)"
+                      @click="$emit('submit-score', match)"
                       class="modern-button bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold"
                     >
-                      🎯 Submit Score
+                      {{ t('matches.submitScore') }}
                     </button>
                     <button
                       @click="handleCancel(match)"
                       class="modern-button bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold"
                     >
-                      ❌ Cancel
+                      {{ t('matches.cancelMatch') }}
                     </button>
                   </div>
                 </div>
@@ -137,11 +136,11 @@
               :disabled="currentPage === 1"
               class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50"
             >
-              Previous
+              {{ t('common.previous') }}
             </button>
             <div class="flex items-center space-x-2">
               <span class="text-gray-600 dark:text-gray-400">
-                Page {{ currentPage }} of {{ totalPages }}
+                {{ t('common.page', { current: currentPage, total: totalPages }) }}
               </span>
             </div>
             <button 
@@ -149,29 +148,21 @@
               :disabled="currentPage === totalPages"
               class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50"
             >
-              Next
+              {{ t('common.next') }}
             </button>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Submit Score Modal -->
-    <SubmitScore
-      :show="showScoreModal"
-      :match="selectedMatch"
-      @close="closeSubmitScore"
-      @submit="submitScore"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from '../i18n';
 import { groupApi } from '../api';
 import { useGroupStore } from '../stores/group';
 import Tournament from './Tournament.vue';
-import SubmitScore from './SubmitScore.vue';
 import type { Match, Player, PlayerInfo } from '../types';
 
 const props = defineProps<{
@@ -181,43 +172,61 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'create-match', playerIds: string[]): void;
+  (e: 'submit-score', match: Match): void;
 }>();
 
+const { t } = useI18n();
 const groupStore = useGroupStore();
-const selectedPlayers = ref([['', ''], ['', '']]);
+const playerSelections = ref<string[][]>([
+  ['', ''],
+  ['', '']
+]);
 const selectionError = ref('');
 const currentPage = ref(1);
 const totalPages = ref(1);
 const pageSize = 10;
 
-// Submit Score Modal
-const showScoreModal = ref(false);
-const selectedMatch = ref<Match | null>(null);
+const getPlayerValue = (teamIndex: number, playerIndex: number): string => {
+  return playerSelections.value?.[teamIndex]?.[playerIndex] || '';
+};
 
-const availablePlayersForSelect = (teamIndex: number, playerIndex: number) => {
-  return props.players.filter(player => {
-    const selectedIds = selectedPlayers.value.flat().filter((id, idx) => {
-      const currentTeamIndex = Math.floor(idx / 2);
-      const currentPlayerIndex = idx % 2;
-      return id && (teamIndex !== currentTeamIndex || playerIndex !== currentPlayerIndex);
-    });
-    return !selectedIds.includes(player.id);
-  });
+const updatePlayer = (teamIndex: number, playerIndex: number, event: Event) => {
+  const value = (event.target as HTMLSelectElement).value;
+  if (!playerSelections.value[teamIndex]) {
+    playerSelections.value[teamIndex] = ['', ''];
+  }
+  playerSelections.value[teamIndex][playerIndex] = value;
+  validateSelection();
+};
+
+const getAvailablePlayers = (teamIndex: number, playerIndex: number) => {
+  const currentValue = getPlayerValue(teamIndex, playerIndex);
+  const selectedIds = playerSelections.value
+    .flatMap(team => team || ['', ''])
+    .filter(id => id !== '' && id !== currentValue);
+
+  return props.players.filter(player => 
+    !selectedIds.includes(player.id) || player.id === currentValue
+  );
 };
 
 const validateSelection = () => {
-  const selectedIds = selectedPlayers.value.flat().filter(id => id !== '');
+  const selectedIds = playerSelections.value
+    .flatMap(team => team || ['', ''])
+    .filter(id => id !== '');
+  
   const uniqueIds = new Set(selectedIds);
   
   if (selectedIds.length !== uniqueIds.size) {
-    selectionError.value = 'Each player can only be selected once';
+    selectionError.value = t('errors.duplicatePlayer');
   } else {
     selectionError.value = '';
   }
 };
 
 const getTeamNames = (team: PlayerInfo[]) => {
-  return team.map(player => player.name).join(' & ');
+  if (!team || !Array.isArray(team)) return '';
+  return team.map(player => player?.name || '').filter(Boolean).join(' & ');
 };
 
 const formatDate = (timestamp: string) => {
@@ -227,39 +236,27 @@ const formatDate = (timestamp: string) => {
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    return 'Today, ' + date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
+    return t('common.today') + ', ' + date.toLocaleTimeString();
   } else if (diffDays === 1) {
-    return 'Yesterday, ' + date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
+    return t('common.yesterday') + ', ' + date.toLocaleTimeString();
   } else {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
+    return date.toLocaleDateString();
   }
 };
 
 const handleSubmit = () => {
   if (selectionError.value) return;
   
-  const playerIds = selectedPlayers.value.flat();
-  emit('create-match', playerIds);
-  selectedPlayers.value = [['', ''], ['', '']];
-  selectionError.value = '';
+  const playerIds = playerSelections.value.flatMap(team => team || ['', '']).filter(id => id !== '');
+  if (playerIds.length === 4) {
+    emit('create-match', playerIds);
+    playerSelections.value = [['', ''], ['', '']];
+    selectionError.value = '';
+  }
 };
 
 const handleCancel = async (match: Match) => {
-  if (!confirm('Are you sure you want to cancel this match?')) return;
+  if (!confirm(t('matches.confirmCancel'))) return;
 
   try {
     await groupApi.cancelMatch(
@@ -269,7 +266,7 @@ const handleCancel = async (match: Match) => {
     );
     await groupStore.loadMatches(currentPage.value, pageSize);
   } catch (error) {
-    alert('Failed to cancel match');
+    alert(t('errors.failedToDelete'));
   }
 };
 
@@ -282,7 +279,7 @@ const handleRandomMatches = async (matches: string[][]) => {
     );
     await groupStore.loadMatches(currentPage.value, pageSize);
   } catch (error) {
-    alert('Failed to create tournament matches');
+    alert(t('errors.failedToCreate'));
   }
 };
 
@@ -298,37 +295,7 @@ const changePage = async (page: number) => {
     totalPages.value = Math.ceil(response.data.total / pageSize);
     await groupStore.loadMatches(page, pageSize);
   } catch (error) {
-    alert('Failed to load matches');
-  }
-};
-
-const showSubmitScore = (match: Match) => {
-  selectedMatch.value = match;
-  showScoreModal.value = true;
-};
-
-const closeSubmitScore = () => {
-  showScoreModal.value = false;
-  selectedMatch.value = null;
-};
-
-const submitScore = async (scoreTeam1: number, scoreTeam2: number) => {
-  if (!selectedMatch.value) return;
-
-  try {
-    await groupApi.submitResults(
-      selectedMatch.value.group_name,
-      selectedMatch.value.id,
-      groupStore.groupPassword,
-      scoreTeam1,
-      scoreTeam2
-    );
-    await Promise.all([
-      groupStore.loadMatches(currentPage.value, pageSize),
-      groupStore.loadStatistics()
-    ]);
-  } catch (error) {
-    alert('Failed to submit match results');
+    alert(t('errors.failedToLoad'));
   }
 };
 </script>

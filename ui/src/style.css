@@ -2,175 +2,95 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 :root {
   --primary: #3b82f6;
   --secondary: #6366f1;
-  --background: #f8fafc;
-  --text: #1e293b;
-  --border: #e2e8f0;
-  --input-bg: #f1f5f9;
-  --input-text: #0f172a;
-}
-
-/* Base styles */
-html {
-  height: -webkit-fill-available;
-  scroll-behavior: smooth;
+  --background: #f3f4f6;
+  --text: #1f2937;
+  --border: #e5e7eb;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   background-color: var(--background);
   color: var(--text);
   line-height: 1.6;
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
-  -webkit-font-smoothing: antialiased;
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
 }
 
-/* Mobile viewport height fix */
-@supports (-webkit-touch-callout: none) {
-  body {
-    min-height: -webkit-fill-available;
-  }
-}
-
-/* Touch interactions */
-@media (hover: none) {
-  .modern-button, button, [role="button"] {
-    cursor: default;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-}
-
-/* Improved touch targets */
-@media (max-width: 640px) {
-  .modern-button, button, select, input {
-    min-height: 44px;
-    padding-top: 0.625rem;
-    padding-bottom: 0.625rem;
-  }
-
-  .modern-input {
-    font-size: 16px; /* Prevent iOS zoom */
-  }
-}
-
-/* Modern container styles */
 .modern-container {
-  @apply p-4 sm:p-6 rounded-xl;
+  @apply p-6 rounded-xl shadow-lg;
   background: white;
   border: 1px solid var(--border);
-  transition: all 0.2s ease;
 }
 
-/* Modern button styles */
 .modern-button {
   @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out;
-  background: var(--primary);
+  background: linear-gradient(to right, var(--primary), var(--secondary));
   color: white;
-  touch-action: manipulation;
+  border: none;
+  cursor: pointer;
+}
+
+.modern-button:hover {
+  @apply shadow-md transform -translate-y-0.5;
 }
 
 .modern-button:active {
-  transform: scale(0.98);
+  @apply transform translate-y-0;
 }
 
-/* Modern input styles */
+.modern-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
 .modern-input {
-  @apply px-4 py-2 w-full rounded-lg border;
-  background: var(--input-bg);
-  color: var(--input-text);
-  border-color: var(--border);
-  transition: all 0.2s ease;
-  touch-action: manipulation;
+  @apply px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200;
 }
 
 .modern-input:focus {
-  @apply ring-2 ring-primary border-transparent;
-  background: white;
+  @apply shadow-md;
 }
 
-/* PWA specific styles */
-@media (display-mode: standalone) {
-  /* Add safe area padding */
-  body {
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-
-  /* Full-height app layout */
-  #app {
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Remove browser chrome in standalone mode */
-  .modern-container {
-    @apply rounded-none sm:rounded-xl;
-  }
-}
-
-/* Dark mode support */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f172a;
-    --text: #e2e8f0;
-    --border: #1e293b;
-    --input-bg: #1e293b;
-    --input-text: #f1f5f9;
+    --primary: #3b82f6;
+    --secondary: #6366f1;
+    --background: #111827;
+    --text: #f3f4f6;
+    --border: #374151;
   }
 
   .modern-container {
-    background: #1e293b;
+    background: #1f2937;
   }
 
   .modern-input {
-    @apply border-gray-700;
-    background: var(--input-bg);
-    color: var(--input-text);
-  }
-
-  .modern-input:focus {
-    background: #2d3748;
+    @apply border-gray-700 bg-gray-800 text-white;
   }
 }
 
-/* Loading states */
-.loading {
-  @apply animate-pulse bg-gray-200 dark:bg-gray-700;
-}
+/* Safe area insets for mobile devices */
+@supports (padding: max(0px)) {
+  .safe-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
 
-/* Focus styles */
-:focus {
-  @apply outline-none ring-2 ring-primary ring-offset-2;
+  .safe-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .safe-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
 }
 
 /* Improved scrolling */
 * {
   -webkit-overflow-scrolling: touch;
-}
-
-/* Better form elements on iOS */
-input[type="text"],
-input[type="password"],
-input[type="email"],
-input[type="number"],
-input[type="search"],
-input[type="tel"],
-input[type="url"],
-select,
-textarea {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border-radius: 8px;
 }
 
 /* Prevent pull-to-refresh in PWA mode */
@@ -180,10 +100,10 @@ textarea {
   }
 }
 
-/* Smooth transitions */
+/* Transitions */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 
 .fade-enter-from,
@@ -191,37 +111,14 @@ textarea {
   opacity: 0;
 }
 
-/* Responsive typography */
-@media (max-width: 640px) {
-  html {
-    font-size: 14px;
+/* Loading animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-/* Better touch feedback */
-@media (hover: none) {
-  .hover\:shadow-lg:hover {
-    box-shadow: none;
-  }
-
-  .hover\:bg-opacity-90:hover {
-    background-opacity: 1;
-  }
-}
-
-/* Safe area insets for notched devices */
-.safe-top {
-  padding-top: env(safe-area-inset-top);
-}
-
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.safe-left {
-  padding-left: env(safe-area-inset-left);
-}
-
-.safe-right {
-  padding-right: env(safe-area-inset-right);
+.loading {
+  @apply inline-block w-4 h-4 border-2 border-gray-200 border-t-blue-500 rounded-full;
+  animation: spin 0.6s linear infinite;
 }

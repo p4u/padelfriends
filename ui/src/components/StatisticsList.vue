@@ -1,107 +1,109 @@
 <template>
   <div class="space-y-8">
-    <!-- Stats Tabs -->
-    <div class="flex justify-center space-x-4">
-      <button 
-        v-for="tab in tabs" 
-        :key="tab.value"
-        @click="activeTab = tab.value"
-        :class="[
-          'px-6 py-3 rounded-lg font-bold transition-all',
-          activeTab === tab.value 
-            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg' 
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-        ]"
-      >
-        {{ tab.icon }} {{ tab.label }}
-      </button>
-    </div>
-
-    <!-- Stats Table -->
+    <!-- Statistics Header -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="bg-gray-50 dark:bg-gray-700">
-              <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                Player
-              </th>
-              <template v-if="activeTab === 'games'">
-                <th 
-                  v-for="col in gameColumns" 
-                  :key="col.key"
-                  @click="sortBy(col.key)"
-                  class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  <div class="flex items-center space-x-1">
-                    <span>{{ col.label }}</span>
-                    <span v-if="sortKey === col.key" class="text-blue-500">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+          {{ t('statistics.title') }}
+        </h2>
+      </div>
+
+      <div v-if="!statistics.length" class="p-6 text-center text-gray-500 dark:text-gray-400">
+        {{ t('statistics.noStats') }}
+      </div>
+      
+      <div v-else class="p-6">
+        <!-- Games Statistics -->
+        <div class="mb-8">
+          <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+            {{ t('statistics.games') }}
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead>
+                <tr>
+                  <th 
+                    v-for="col in gameColumns" 
+                    :key="col.key"
+                    @click="sortBy(col.key)"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    {{ t(`statistics.${col.key}`) }}
+                    <span v-if="sortKey === col.key" class="ml-1">
                       {{ sortOrder === 'asc' ? '↑' : '↓' }}
                     </span>
-                  </div>
-                </th>
-              </template>
-              <template v-else>
-                <th 
-                  v-for="col in pointColumns" 
-                  :key="col.key"
-                  @click="sortBy(col.key)"
-                  class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  <div class="flex items-center space-x-1">
-                    <span>{{ col.label }}</span>
-                    <span v-if="sortKey === col.key" class="text-blue-500">
-                      {{ sortOrder === 'asc' ? '↑' : '↓' }}
-                    </span>
-                  </div>
-                </th>
-              </template>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
-            <tr 
-              v-for="(stat, index) in sortedStats" 
-              :key="stat.player_id"
-              :class="[
-                'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors',
-                index < 3 ? 'font-semibold' : ''
-              ]"
-            >
-              <td class="px-6 py-4">
-                <div class="flex items-center space-x-2">
-                  <span v-if="index === 0" class="text-2xl">🏆</span>
-                  <span v-else-if="index === 1" class="text-2xl">🥈</span>
-                  <span v-else-if="index === 2" class="text-2xl">🥉</span>
-                  <span :class="index < 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'">
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tr v-for="stat in sortedStats" :key="stat.player_id">
+                  <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
                     {{ stat.player_name }}
-                  </span>
-                </div>
-              </td>
-              <template v-if="activeTab === 'games'">
-                <td 
-                  v-for="col in gameColumns" 
-                  :key="col.key"
-                  class="px-6 py-4 text-gray-900 dark:text-white"
-                >
-                  <span :class="getValueClass(stat[col.key], col.key)">
-                    {{ formatValue(stat[col.key], col.key) }}
-                  </span>
-                </td>
-              </template>
-              <template v-else>
-                <td 
-                  v-for="col in pointColumns" 
-                  :key="col.key"
-                  class="px-6 py-4 text-gray-900 dark:text-white"
-                >
-                  <span :class="getValueClass(stat[col.key], col.key)">
-                    {{ formatValue(stat[col.key], col.key) }}
-                  </span>
-                </td>
-              </template>
-            </tr>
-          </tbody>
-        </table>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+                    {{ stat.total_games }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-green-600 dark:text-green-400">
+                      {{ stat.games_won }} ({{ formatPercent(stat.game_win_rate) }})
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-red-600 dark:text-red-400">
+                      {{ stat.games_lost }} ({{ formatPercent(stat.game_loss_rate) }})
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Points Statistics -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+            {{ t('statistics.points') }}
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead>
+                <tr>
+                  <th 
+                    v-for="col in pointColumns" 
+                    :key="col.key"
+                    @click="sortBy(col.key)"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    {{ t(`statistics.${col.key}`) }}
+                    <span v-if="sortKey === col.key" class="ml-1">
+                      {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tr v-for="stat in sortedStats" :key="stat.player_id">
+                  <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+                    {{ stat.player_name }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+                    {{ stat.total_points }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-green-600 dark:text-green-400">
+                      {{ stat.points_won }} ({{ formatPercent(stat.point_win_rate) }})
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-red-600 dark:text-red-400">
+                      {{ stat.points_lost }} ({{ formatPercent(stat.point_loss_rate) }})
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -109,35 +111,29 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from '../i18n';
 import type { Statistics } from '../types';
 
 const props = defineProps<{
   statistics: Statistics[];
 }>();
 
-const activeTab = ref('games');
+const { t } = useI18n();
 const sortKey = ref('games_won');
 const sortOrder = ref<'asc' | 'desc'>('desc');
 
-const tabs = [
-  { value: 'games', label: 'Games', icon: '🎮' },
-  { value: 'points', label: 'Points', icon: '📊' }
-];
-
 const gameColumns = [
-  { key: 'total_games', label: 'Games' },
-  { key: 'games_won', label: 'Wins' },
-  { key: 'game_win_rate', label: 'Win %' },
-  { key: 'games_lost', label: 'Losses' },
-  { key: 'game_loss_rate', label: 'Loss %' }
+  { key: 'player_name', label: 'Player' },
+  { key: 'total_games', label: 'Total Games' },
+  { key: 'games_won', label: 'Games Won' },
+  { key: 'games_lost', label: 'Games Lost' }
 ];
 
 const pointColumns = [
-  { key: 'total_points', label: 'Points' },
-  { key: 'points_won', label: 'Won' },
-  { key: 'point_win_rate', label: 'Win %' },
-  { key: 'points_lost', label: 'Lost' },
-  { key: 'point_loss_rate', label: 'Loss %' }
+  { key: 'player_name', label: 'Player' },
+  { key: 'total_points', label: 'Total Points' },
+  { key: 'points_won', label: 'Points Won' },
+  { key: 'points_lost', label: 'Points Lost' }
 ];
 
 const sortedStats = computed(() => {
@@ -161,17 +157,7 @@ const sortBy = (key: string) => {
   }
 };
 
-const formatValue = (value: number, key: string) => {
-  if (key.includes('rate')) {
-    return `${value.toFixed(1)}%`;
-  }
-  return value;
-};
-
-const getValueClass = (value: number, key: string) => {
-  if (!key.includes('rate') && !key.includes('total')) {
-    return value > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-  }
-  return '';
+const formatPercent = (value: number) => {
+  return `${value.toFixed(1)}%`;
 };
 </script>

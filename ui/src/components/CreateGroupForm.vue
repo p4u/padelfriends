@@ -1,39 +1,65 @@
 <template>
-  <div class="space-y-4">
-    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">🎾 Create New Group</h2>
-    <form @submit.prevent="handleSubmit" class="space-y-4">
-      <input
-        v-model="form.name"
-        type="text"
-        placeholder="Group Name"
-        class="modern-input w-full text-gray-900 dark:text-white"
-        required
-      />
-      <input
-        v-model="form.password"
-        type="password"
-        placeholder="Password"
-        class="modern-input w-full text-gray-900 dark:text-white"
-        required
-      />
-      <button type="submit" class="modern-button w-full">
-        Create Group
+  <form @submit.prevent="handleSubmit" class="modern-container bg-white dark:bg-gray-800">
+    <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+      {{ t('groups.createNew') }}
+    </h2>
+    <div class="space-y-4">
+      <!-- Group Name -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ t('groups.name') }}
+        </label>
+        <input 
+          v-model="groupName"
+          type="text"
+          required
+          class="modern-input w-full text-gray-900 dark:text-white bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
+          :placeholder="t('groups.name')"
+        />
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ t('auth.password') }}
+        </label>
+        <input 
+          v-model="password"
+          type="password"
+          required
+          class="modern-input w-full text-gray-900 dark:text-white bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
+          :placeholder="t('auth.password')"
+        />
+      </div>
+
+      <!-- Submit Button -->
+      <button 
+        type="submit"
+        class="modern-button w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+      >
+        {{ t('groups.create') }}
       </button>
-    </form>
-  </div>
+    </div>
+  </form>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-
-const form = ref({ name: '', password: '' });
+import { useI18n } from '../i18n';
 
 const emit = defineEmits<{
-  (e: 'create', name: string, password: string): void;
+  (e: 'create-group', name: string, password: string): void;
 }>();
 
+const { t } = useI18n();
+const groupName = ref('');
+const password = ref('');
+
 const handleSubmit = () => {
-  emit('create', form.value.name, form.value.password);
-  form.value = { name: '', password: '' };
+  if (groupName.value.trim() && password.value.trim()) {
+    emit('create-group', groupName.value.trim(), password.value.trim());
+    groupName.value = '';
+    password.value = '';
+  }
 };
 </script>

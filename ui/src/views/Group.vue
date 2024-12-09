@@ -1,16 +1,19 @@
 <template>
   <div class="max-w-4xl mx-auto space-y-8">
     <!-- Group Header -->
-    <div class="retro-container">
-      <h1 class="text-2xl font-bold mb-4 pixel-text glow">
+    <div class="modern-container bg-white dark:bg-gray-800">
+      <h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
         🎾 {{ currentGroup?.name }} 🏸
       </h1>
-      <div class="flex space-x-4">
+      <div class="flex flex-wrap gap-2">
         <button 
           v-for="tab in tabs" 
           :key="tab.value"
           @click="activeTab = tab.value" 
-          :class="['retro-button', activeTab === tab.value ? 'glow' : '']"
+          :class="[
+            'modern-button',
+            activeTab === tab.value ? 'bg-primary ring-2 ring-primary ring-offset-2' : 'bg-gray-500'
+          ]"
         >
           {{ tab.icon }} {{ tab.label }}
         </button>
@@ -18,8 +21,15 @@
     </div>
 
     <!-- Content Tabs -->
-    <div class="retro-container">
+    <div class="modern-container bg-white dark:bg-gray-800">
+      <div v-if="loading" class="text-center text-gray-900 dark:text-white">
+        Loading... 🔄
+      </div>
+      <div v-else-if="error" class="text-center text-red-500">
+        {{ error }} 😢
+      </div>
       <component
+        v-else
         :is="currentComponent"
         v-bind="componentProps"
         @add-player="addPlayer"
@@ -32,15 +42,18 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useGroupStore } from '../stores/group';
 import { groupApi } from '../api';
 import { PlayerList, MatchList, StatisticsList } from '../components';
 import type { Match } from '../types';
 
 const route = useRoute();
+const router = useRouter();
 const groupStore = useGroupStore();
 const activeTab = ref('players');
+const loading = ref(false);
+const error = ref<string | null>(null);
 
 const tabs = [
   { value: 'players', label: 'Players', icon: '🏃' },
@@ -72,11 +85,29 @@ const componentProps = computed(() => {
 });
 
 onMounted(async () => {
-  await Promise.all([
-    groupStore.loadPlayers(),
-    groupStore.loadMatches(),
-    groupStore.loadStatistics()
-  ]);
+  if (!currentGroup.value) {
+    const restored = await groupStore.restoreGroupFromStorage();
+    if (!restored) {
+      router.push('/');
+      return;
+    }
+  }
+
+  loading.value = true;
+  error.value = null;
+
+  try {
+    await Promise.all([
+      groupStore.loadPlayers(),
+      groupStore.loadMatches(),
+      groupStore.loadStatistics()
+    ]);
+  } catch (err) {
+    error.value = 'Failed to load group data';
+    console.error('Failed to load group data:', err);
+  } finally {
+    loading.value = false;
+  }
 });
 
 const addPlayer = async (name: string) => {

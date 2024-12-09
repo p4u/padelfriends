@@ -3,6 +3,13 @@ import { ref, markRaw } from 'vue';
 import type { Group, Player, Match, Statistics } from '../types';
 import { groupApi } from '../api';
 
+const STORAGE_KEY = 'padel-friends-group';
+
+interface StoredGroupData {
+  group: Group;
+  password: string;
+}
+
 export const useGroupStore = defineStore('group', () => {
   const currentGroup = ref<Group | null>(null);
   const players = ref<Player[]>([]);
@@ -15,6 +22,40 @@ export const useGroupStore = defineStore('group', () => {
   const setGroup = (group: Group, password: string) => {
     currentGroup.value = markRaw({ ...group });
     groupPassword.value = password;
+    // Save to localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ group, password }));
+  };
+
+  const clearGroup = () => {
+    currentGroup.value = null;
+    groupPassword.value = '';
+    players.value = [];
+    matches.value = [];
+    statistics.value = [];
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
+  const restoreGroupFromStorage = async (): Promise<boolean> => {
+    const storedData = localStorage.getItem(STORAGE_KEY);
+    if (!storedData) return false;
+
+    try {
+      const { group, password }: StoredGroupData = JSON.parse(storedData);
+      if (!group || !password) return false;
+
+      // Verify the group still exists and password is valid
+      try {
+        const response = await groupApi.getByName(group.name, password);
+        setGroup(response.data, password);
+        return true;
+      } catch {
+        clearGroup();
+        return false;
+      }
+    } catch {
+      clearGroup();
+      return false;
+    }
   };
 
   const clearError = () => {
@@ -78,6 +119,8 @@ export const useGroupStore = defineStore('group', () => {
     loading,
     error,
     setGroup,
+    clearGroup,
+    restoreGroupFromStorage,
     loadPlayers,
     loadMatches,
     loadStatistics,

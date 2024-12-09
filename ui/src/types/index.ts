@@ -30,9 +30,20 @@ export interface Match {
 export interface Statistics {
   player_id: string;
   player_name: string;
-  matches_played: number;
-  matches_won: number;
-  win_rate: number;
+  
+  // Game Statistics
+  total_games: number;
+  games_won: number;
+  games_lost: number;
+  game_win_rate: number;
+  game_loss_rate: number;
+  
+  // Point Statistics
+  total_points: number;
+  points_won: number;
+  points_lost: number;
+  point_win_rate: number;
+  point_loss_rate: number;
 }
 
 export interface CreateMatchPayload {
@@ -47,3 +58,11 @@ export interface SubmitScorePayload {
   score_team1: number;
   score_team2: number;
 }
+
+// Index signature for dynamic key access in statistics sorting
+export interface IndexSignature {
+  [key: string]: any;
+}
+
+// Extend Statistics to include index signature
+export interface StatisticsWithIndex extends Statistics, IndexSignature {}

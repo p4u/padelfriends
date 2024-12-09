@@ -65,7 +65,6 @@ func (s *MatchService) CreateMatch(ctx context.Context, groupName string, player
 		return models.MatchResponse{}, errors.New("exactly 4 players required for a match")
 	}
 
-	// Check for duplicate players
 	if hasDuplicatePlayers(playerIDs) {
 		return models.MatchResponse{}, errors.New("duplicate players are not allowed in a match")
 	}
@@ -73,7 +72,6 @@ func (s *MatchService) CreateMatch(ctx context.Context, groupName string, player
 	matchesColl := s.db.Collection("matches")
 	detailsColl := s.db.Collection("matchdetails")
 
-	// Create the match
 	match := models.Match{
 		GroupName: groupName,
 		Timestamp: time.Now(),
@@ -85,7 +83,6 @@ func (s *MatchService) CreateMatch(ctx context.Context, groupName string, player
 	}
 	match.ID = res.InsertedID.(primitive.ObjectID)
 
-	// Create match details
 	detail := models.MatchDetail{
 		MatchID:    match.ID,
 		Team1:      playerIDs[:2],
@@ -99,7 +96,6 @@ func (s *MatchService) CreateMatch(ctx context.Context, groupName string, player
 		return models.MatchResponse{}, err
 	}
 
-	// Get player information
 	team1Players, err := s.getPlayersInfo(ctx, detail.Team1)
 	if err != nil {
 		return models.MatchResponse{}, err
@@ -110,7 +106,6 @@ func (s *MatchService) CreateMatch(ctx context.Context, groupName string, player
 		return models.MatchResponse{}, err
 	}
 
-	// Create response
 	response := models.MatchResponse{
 		ID:         match.ID,
 		GroupName:  match.GroupName,
@@ -143,25 +138,21 @@ func (s *MatchService) CancelMatch(ctx context.Context, matchID primitive.Object
 	matchesColl := s.db.Collection("matches")
 	detailsColl := s.db.Collection("matchdetails")
 
-	// Start a session for the transaction
 	session, err := s.db.Client().StartSession()
 	if err != nil {
 		return err
 	}
 	defer session.EndSession(ctx)
 
-	// Run transaction
 	_, err = session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
-		// Delete match details first
 		_, err := detailsColl.DeleteOne(sessCtx, bson.M{"match_id": matchID})
 		if err != nil {
 			return nil, err
 		}
 
-		// Delete the match
 		result, err := matchesColl.DeleteOne(sessCtx, bson.M{
 			"_id":    matchID,
-			"status": "pending", // Only allow deleting pending matches
+			"status": "pending",
 		})
 		if err != nil {
 			return nil, err
@@ -177,54 +168,62 @@ func (s *MatchService) CancelMatch(ctx context.Context, matchID primitive.Object
 	return err
 }
 
-// SubmitResults updates the match detail with final scores.
-func (s *MatchService) SubmitResults(ctx context.Context, matchID primitive.ObjectID, scoreTeam1, scoreTeam2 int) error {
-	if scoreTeam1 < 0 || scoreTeam1 > 8 || scoreTeam2 < 0 || scoreTeam2 > 8 {
-		return errors.New("invalid scores")
-	}
-
+// GetRecentMatches returns the last 20 matches for a group
+func (s *MatchService) GetRecentMatches(ctx context.Context, groupName string) ([]models.MatchResponse, error) {
 	matchesColl := s.db.Collection("matches")
 	detailsColl := s.db.Collection("matchdetails")
 
-	// Start a session for the transaction
-	session, err := s.db.Client().StartSession()
+	// Get last 20 matches
+	findOptions := options.Find().
+		SetSort(bson.D{{Key: "timestamp", Value: -1}}).
+		SetLimit(20)
+
+	cur, err := matchesColl.Find(ctx, bson.M{"group_name": groupName}, findOptions)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer session.EndSession(ctx)
+	defer cur.Close(ctx)
 
-	// Run transaction
-	_, err = session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
-		// Update match status
-		_, err := matchesColl.UpdateOne(
-			sessCtx,
-			bson.M{"_id": matchID, "status": "pending"},
-			bson.M{"$set": bson.M{"status": "completed"}},
-		)
+	var matches []models.Match
+	if err := cur.All(ctx, &matches); err != nil {
+		return nil, err
+	}
+
+	var responses []models.MatchResponse
+	for _, match := range matches {
+		var detail models.MatchDetail
+		err := detailsColl.FindOne(ctx, bson.M{"match_id": match.ID}).Decode(&detail)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
-		// Update match details with scores
-		_, err = detailsColl.UpdateOne(
-			sessCtx,
-			bson.M{"match_id": matchID},
-			bson.M{"$set": bson.M{
-				"score_team1": scoreTeam1,
-				"score_team2": scoreTeam2,
-			}},
-		)
+		team1Players, err := s.getPlayersInfo(ctx, detail.Team1)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
-		return nil, nil
-	})
+		team2Players, err := s.getPlayersInfo(ctx, detail.Team2)
+		if err != nil {
+			continue
+		}
 
-	return err
+		response := models.MatchResponse{
+			ID:         match.ID,
+			GroupName:  match.GroupName,
+			Timestamp:  match.Timestamp,
+			Team1:      team1Players,
+			Team2:      team2Players,
+			ScoreTeam1: detail.ScoreTeam1,
+			ScoreTeam2: detail.ScoreTeam2,
+			Status:     match.Status,
+		}
+		responses = append(responses, response)
+	}
+
+	return responses, nil
 }
 
-// ListMatches returns all matches for a group with player details.
+// ListMatches returns all matches for a group with pagination
 func (s *MatchService) ListMatches(ctx context.Context, groupName string, page, pageSize int) ([]models.MatchResponse, int, error) {
 	matchesColl := s.db.Collection("matches")
 	detailsColl := s.db.Collection("matchdetails")
@@ -255,7 +254,6 @@ func (s *MatchService) ListMatches(ctx context.Context, groupName string, page, 
 		return nil, 0, err
 	}
 
-	// Build response with details and player information
 	var responses []models.MatchResponse
 	for _, match := range matches {
 		var detail models.MatchDetail
@@ -288,4 +286,47 @@ func (s *MatchService) ListMatches(ctx context.Context, groupName string, page, 
 	}
 
 	return responses, int(totalCount), nil
+}
+
+// SubmitResults updates the match detail with final scores.
+func (s *MatchService) SubmitResults(ctx context.Context, matchID primitive.ObjectID, scoreTeam1, scoreTeam2 int) error {
+	if scoreTeam1 < 0 || scoreTeam1 > 8 || scoreTeam2 < 0 || scoreTeam2 > 8 {
+		return errors.New("invalid scores")
+	}
+
+	matchesColl := s.db.Collection("matches")
+	detailsColl := s.db.Collection("matchdetails")
+
+	session, err := s.db.Client().StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(ctx)
+
+	_, err = session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+		_, err := matchesColl.UpdateOne(
+			sessCtx,
+			bson.M{"_id": matchID, "status": "pending"},
+			bson.M{"$set": bson.M{"status": "completed"}},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = detailsColl.UpdateOne(
+			sessCtx,
+			bson.M{"match_id": matchID},
+			bson.M{"$set": bson.M{
+				"score_team1": scoreTeam1,
+				"score_team2": scoreTeam2,
+			}},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	})
+
+	return err
 }

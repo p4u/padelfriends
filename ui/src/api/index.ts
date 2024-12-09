@@ -77,6 +77,14 @@ export const groupApi = {
       { params: { password } }
     ),
   
+  getRecentMatches: (groupId: string, password: string) =>
+    api.get(`/group/${groupId}/matches`, { 
+      params: { 
+        password,
+        recent: true
+      } 
+    }),
+
   getMatches: (groupId: string, password: string, page: number = 1, pageSize: number = 10) =>
     api.get(`/group/${groupId}/matches`, { 
       params: { 

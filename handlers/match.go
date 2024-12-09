@@ -163,6 +163,18 @@ func (h *MatchHandler) ListMatches(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if we want recent matches or paginated list
+	wantRecent := r.URL.Query().Get("recent") == "true"
+	if wantRecent {
+		matches, err := h.MatchService.GetRecentMatches(r.Context(), groupName)
+		if err != nil {
+			http.Error(w, "Error listing matches: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusOK, matches)
+		return
+	}
+
 	// Get pagination parameters
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	pageSize, _ := strconv.Atoi(r.URL.Query().Get("pageSize"))

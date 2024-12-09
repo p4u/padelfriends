@@ -15,7 +15,6 @@ export const useGroupStore = defineStore('group', () => {
   const setGroup = (group: Group, password: string) => {
     currentGroup.value = markRaw({ ...group });
     groupPassword.value = password;
-    // Save to localStorage
     localStorage.setItem('padel-friends-group', JSON.stringify({ group, password }));
   };
 
@@ -36,7 +35,6 @@ export const useGroupStore = defineStore('group', () => {
       const { group, password } = JSON.parse(storedData);
       if (!group || !password) return false;
 
-      // Verify the group still exists and password is valid
       try {
         const response = await groupApi.getByName(group.name, password);
         setGroup(response.data, password);
@@ -71,14 +69,22 @@ export const useGroupStore = defineStore('group', () => {
     }
   };
 
-  const loadMatches = async (page: number = 1, pageSize: number = 10) => {
+  const loadMatches = async (page?: number, pageSize?: number) => {
     if (!currentGroup.value) return;
     loading.value = true;
     error.value = null;
     
     try {
-      const response = await groupApi.getMatches(currentGroup.value.name, groupPassword.value, page, pageSize);
-      matches.value = Array.isArray(response.data.matches) ? markRaw([...response.data.matches]) : [];
+      let response;
+      if (page !== undefined && pageSize !== undefined) {
+        // Get paginated matches for match history view
+        response = await groupApi.getMatches(currentGroup.value.name, groupPassword.value, page, pageSize);
+        matches.value = Array.isArray(response.data.matches) ? markRaw([...response.data.matches]) : [];
+      } else {
+        // Get recent matches for group view
+        response = await groupApi.getRecentMatches(currentGroup.value.name, groupPassword.value);
+        matches.value = Array.isArray(response.data) ? markRaw([...response.data]) : [];
+      }
     } catch (err) {
       error.value = 'Failed to load matches';
       console.error('Failed to load matches:', err);

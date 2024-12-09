@@ -27,6 +27,7 @@ func New(
 		r.Get("/groups", groupHandler.ListGroups)
 
 		r.Route("/group/{name}", func(r chi.Router) {
+			r.Get("/export/csv", groupHandler.ExportGroupMatchesCSV)
 			r.Post("/players", playerHandler.AddPlayer)
 			r.Get("/players", playerHandler.ListPlayers)
 

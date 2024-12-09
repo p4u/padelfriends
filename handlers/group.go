@@ -79,3 +79,40 @@ func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, groups)
 }
+
+// ExportGroupMatchesCSV handles GET /api/group/{name}/export/csv?password=SECRET
+// Exports all matches for a group in CSV format
+func (h *GroupHandler) ExportGroupMatchesCSV(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	if name == "" {
+		writeError(w, http.StatusBadRequest, "Missing group name")
+		return
+	}
+
+	password := getQueryParam(r, "password")
+	if password == "" {
+		writeError(w, http.StatusBadRequest, "Missing password")
+		return
+	}
+
+	g, err := h.GroupService.GetGroupByName(r.Context(), name)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "Group not found")
+		return
+	}
+
+	if !services.CheckPassword(password, g.PasswordHash) {
+		writeError(w, http.StatusUnauthorized, "Invalid password")
+		return
+	}
+
+	csv, err := h.GroupService.ExportGroupMatchesCSV(r.Context(), name)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Error exporting matches: "+err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", "attachment; filename="+name+"-matches.csv")
+	w.Write([]byte(csv))
+}

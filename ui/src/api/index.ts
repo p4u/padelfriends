@@ -96,4 +96,10 @@ export const groupApi = {
   
   getStatistics: (groupId: string, password: string) =>
     api.get(`/group/${groupId}/statistics`, { params: { password } }),
+
+  exportMatchesCSV: (groupId: string, password: string) =>
+    api.get(`/group/${groupId}/export/csv`, {
+      params: { password },
+      responseType: 'blob'
+    }),
 };

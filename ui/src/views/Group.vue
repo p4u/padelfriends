@@ -37,6 +37,18 @@
         @submit-score="showSubmitScore"
       />
     </div>
+
+    <!-- Export Button -->
+    <div class="modern-container bg-white dark:bg-gray-800 py-4">
+      <div class="flex justify-center">
+        <button 
+          @click="downloadCSV"
+          class="modern-button bg-green-600 hover:bg-green-700 flex items-center gap-2"
+        >
+          📥 Export Matches CSV
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -83,6 +95,30 @@ const componentProps = computed(() => {
     default: return {};
   }
 });
+
+const downloadCSV = async () => {
+  if (!currentGroup.value) return;
+  
+  try {
+    const response = await groupApi.exportMatchesCSV(
+      currentGroup.value.name,
+      groupStore.groupPassword
+    );
+    
+    // Create blob and download
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentGroup.value.name}-matches.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    alert('Failed to export matches');
+  }
+};
 
 onMounted(async () => {
   if (!currentGroup.value) {

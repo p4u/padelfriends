@@ -55,14 +55,26 @@
       </button>
     </form>
 
+    <!-- Random Match Generator -->
+    <RandomMatch 
+      :players="players"
+      @create-matches="handleRandomMatches"
+    />
+
     <!-- Matches List -->
     <div class="space-y-4">
       <div v-for="match in sortedMatches" :key="match.id" 
            class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow">
         <div class="space-y-4">
           <!-- Match Header -->
-          <div class="text-sm text-gray-500 dark:text-gray-400">
-            {{ formatDate(match.timestamp) }}
+          <div class="flex justify-between items-center">
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              {{ formatDate(match.timestamp) }}
+            </div>
+            <div v-if="match.status === 'cancelled'" 
+                 class="text-sm font-medium text-red-500">
+              Cancelled
+            </div>
           </div>
 
           <!-- Match Content -->
@@ -90,18 +102,25 @@
             </div>
 
             <!-- Score or Action -->
-            <div class="ml-6">
+            <div class="ml-6 flex space-x-2">
               <div v-if="match.status === 'completed'" 
                    class="text-2xl font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg">
                 {{ match.score_team1 }} - {{ match.score_team2 }}
               </div>
-              <button
-                v-else
-                @click="$emit('submit-score', match)"
-                class="modern-button bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold"
-              >
-                🎯 Submit Score
-              </button>
+              <template v-else-if="match.status === 'pending'">
+                <button
+                  @click="$emit('submit-score', match)"
+                  class="modern-button bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold"
+                >
+                  🎯 Submit Score
+                </button>
+                <button
+                  @click="handleCancel(match)"
+                  class="modern-button bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold"
+                >
+                  ❌ Cancel
+                </button>
+              </template>
             </div>
           </div>
         </div>
@@ -112,6 +131,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { groupApi } from '../api';
+import { useGroupStore } from '../stores/group';
+import RandomMatch from './RandomMatch.vue';
 import type { Match, Player, PlayerInfo } from '../types';
 
 const props = defineProps<{
@@ -124,6 +146,7 @@ const emit = defineEmits<{
   (e: 'submit-score', match: Match): void;
 }>();
 
+const groupStore = useGroupStore();
 const selectedPlayers = ref([['', ''], ['', '']]);
 const selectionError = ref('');
 
@@ -197,5 +220,33 @@ const handleSubmit = () => {
   emit('create-match', playerIds);
   selectedPlayers.value = [['', ''], ['', '']];
   selectionError.value = '';
+};
+
+const handleCancel = async (match: Match) => {
+  if (!confirm('Are you sure you want to cancel this match?')) return;
+
+  try {
+    await groupApi.cancelMatch(
+      match.group_name,
+      match.id,
+      groupStore.groupPassword
+    );
+    await groupStore.loadMatches();
+  } catch (error) {
+    alert('Failed to cancel match');
+  }
+};
+
+const handleRandomMatches = async (matches: string[][]) => {
+  try {
+    await groupApi.createBatchMatches(
+      groupStore.currentGroup!.name,
+      groupStore.groupPassword,
+      matches
+    );
+    await groupStore.loadMatches();
+  } catch (error) {
+    alert('Failed to create random matches');
+  }
 };
 </script>

@@ -26,6 +26,7 @@ type Match struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	GroupName string             `bson:"group_name" json:"group_name"`
 	Timestamp time.Time          `bson:"timestamp" json:"timestamp"`
+	Status    string             `bson:"status" json:"status"` // "pending", "completed", "cancelled"
 }
 
 // MatchDetail stores the details of a match (teams, scores).

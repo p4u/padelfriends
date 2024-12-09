@@ -24,7 +24,7 @@ export interface Match {
   team2: PlayerInfo[];
   score_team1?: number;
   score_team2?: number;
-  status: 'pending' | 'completed';
+  status: 'pending' | 'completed' | 'cancelled';
 }
 
 export interface Statistics {
@@ -33,4 +33,17 @@ export interface Statistics {
   matches_played: number;
   matches_won: number;
   win_rate: number;
+}
+
+export interface CreateMatchPayload {
+  player_ids: string[];
+}
+
+export interface CreateBatchMatchesPayload {
+  matches: string[][];
+}
+
+export interface SubmitScorePayload {
+  score_team1: number;
+  score_team2: number;
 }

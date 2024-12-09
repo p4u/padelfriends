@@ -76,6 +76,7 @@ func (s *MatchService) CreateMatch(ctx context.Context, groupName string, player
 	match := models.Match{
 		GroupName: groupName,
 		Timestamp: time.Now(),
+		Status:    "pending",
 	}
 	res, err := matchesColl.InsertOne(ctx, match)
 	if err != nil {
@@ -117,10 +118,49 @@ func (s *MatchService) CreateMatch(ctx context.Context, groupName string, player
 		Team2:      team2Players,
 		ScoreTeam1: detail.ScoreTeam1,
 		ScoreTeam2: detail.ScoreTeam2,
-		Status:     "pending",
+		Status:     match.Status,
 	}
 
 	return response, nil
+}
+
+// CreateMatches creates multiple matches at once
+func (s *MatchService) CreateMatches(ctx context.Context, groupName string, matchesPlayerIDs [][]primitive.ObjectID) ([]models.MatchResponse, error) {
+	var responses []models.MatchResponse
+	for _, playerIDs := range matchesPlayerIDs {
+		match, err := s.CreateMatch(ctx, groupName, playerIDs)
+		if err != nil {
+			return nil, err
+		}
+		responses = append(responses, match)
+	}
+	return responses, nil
+}
+
+// CancelMatch cancels a match
+func (s *MatchService) CancelMatch(ctx context.Context, matchID primitive.ObjectID) error {
+	matchesColl := s.db.Collection("matches")
+
+	result, err := matchesColl.UpdateOne(
+		ctx,
+		bson.M{
+			"_id":    matchID,
+			"status": "pending", // Only allow cancelling pending matches
+		},
+		bson.M{
+			"$set": bson.M{"status": "cancelled"},
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if result.ModifiedCount == 0 {
+		return errors.New("match not found or already completed/cancelled")
+	}
+
+	return nil
 }
 
 // SubmitResults updates the match detail with final scores.
@@ -128,10 +168,45 @@ func (s *MatchService) SubmitResults(ctx context.Context, matchID primitive.Obje
 	if scoreTeam1 < 0 || scoreTeam1 > 8 || scoreTeam2 < 0 || scoreTeam2 > 8 {
 		return errors.New("invalid scores")
 	}
+
+	matchesColl := s.db.Collection("matches")
 	detailsColl := s.db.Collection("matchdetails")
 
-	_, err := detailsColl.UpdateOne(ctx, bson.M{"match_id": matchID},
-		bson.M{"$set": bson.M{"score_team1": scoreTeam1, "score_team2": scoreTeam2}})
+	// Start a session for the transaction
+	session, err := s.db.Client().StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(ctx)
+
+	// Run transaction
+	_, err = session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+		// Update match status
+		_, err := matchesColl.UpdateOne(
+			sessCtx,
+			bson.M{"_id": matchID, "status": "pending"},
+			bson.M{"$set": bson.M{"status": "completed"}},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update match details with scores
+		_, err = detailsColl.UpdateOne(
+			sessCtx,
+			bson.M{"match_id": matchID},
+			bson.M{"$set": bson.M{
+				"score_team1": scoreTeam1,
+				"score_team2": scoreTeam2,
+			}},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	})
+
 	return err
 }
 
@@ -171,11 +246,6 @@ func (s *MatchService) ListMatches(ctx context.Context, groupName string) ([]mod
 			continue
 		}
 
-		status := "pending"
-		if detail.ScoreTeam1 > 0 || detail.ScoreTeam2 > 0 {
-			status = "completed"
-		}
-
 		response := models.MatchResponse{
 			ID:         match.ID,
 			GroupName:  match.GroupName,
@@ -184,7 +254,7 @@ func (s *MatchService) ListMatches(ctx context.Context, groupName string) ([]mod
 			Team2:      team2Players,
 			ScoreTeam1: detail.ScoreTeam1,
 			ScoreTeam2: detail.ScoreTeam2,
-			Status:     status,
+			Status:     match.Status,
 		}
 		responses = append(responses, response)
 	}

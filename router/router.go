@@ -29,9 +29,14 @@ func New(
 		r.Route("/group/{name}", func(r chi.Router) {
 			r.Post("/players", playerHandler.AddPlayer)
 			r.Get("/players", playerHandler.ListPlayers)
+
+			// Match routes
 			r.Post("/matches", matchHandler.CreateMatch)
+			r.Post("/matches/batch", matchHandler.CreateMatches)
+			r.Post("/matches/{match_id}/cancel", matchHandler.CancelMatch)
 			r.Post("/matches/{match_id}/results", matchHandler.SubmitResults)
 			r.Get("/matches", matchHandler.ListMatches)
+
 			r.Get("/statistics", statsHandler.GetStatistics)
 		})
 

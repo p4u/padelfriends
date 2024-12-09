@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { CreateMatchPayload, CreateBatchMatchesPayload, SubmitScorePayload } from '../types';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -50,8 +51,23 @@ export const groupApi = {
     api.get(`/group/${groupId}/players`, { params: { password } }),
   
   createMatch: (groupId: string, password: string, playerIds: string[]) =>
-    api.post(`/group/${groupId}/matches`, JSON.stringify({ player_ids: playerIds }), { params: { password } }),
+    api.post(`/group/${groupId}/matches`, 
+      JSON.stringify({ player_ids: playerIds }), 
+      { params: { password } }
+    ),
+
+  createBatchMatches: (groupId: string, password: string, matches: string[][]) =>
+    api.post(`/group/${groupId}/matches/batch`,
+      JSON.stringify({ matches }),
+      { params: { password } }
+    ),
   
+  cancelMatch: (groupId: string, matchId: string, password: string) =>
+    api.post(`/group/${groupId}/matches/${matchId}/cancel`,
+      {},
+      { params: { password } }
+    ),
+
   submitResults: (groupId: string, matchId: string, password: string, scoreTeam1: number, scoreTeam2: number) =>
     api.post(`/group/${groupId}/matches/${matchId}/results`, 
       JSON.stringify({ score_team1: scoreTeam1, score_team2: scoreTeam2 }), 

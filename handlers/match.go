@@ -54,6 +54,74 @@ func (h *MatchHandler) CreateMatch(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, match)
 }
 
+// POST /api/group/{name}/matches/batch?password=SECRET
+// Payload: { "matches": [["playerID1","playerID2","playerID3","playerID4"], [...], ...] }
+func (h *MatchHandler) CreateMatches(w http.ResponseWriter, r *http.Request) {
+	groupName := chi.URLParam(r, "name")
+
+	if !checkGroupPassword(w, r, h.GroupService, groupName) {
+		return
+	}
+
+	var payload struct {
+		Matches [][]string `json:"matches"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	var allMatches [][]primitive.ObjectID
+	for _, match := range payload.Matches {
+		if len(match) != 4 {
+			http.Error(w, "Each match must have exactly 4 players", http.StatusBadRequest)
+			return
+		}
+
+		var pids []primitive.ObjectID
+		for _, pid := range match {
+			objID, err := parseObjectID(pid)
+			if err != nil {
+				http.Error(w, "Invalid player ID: "+pid, http.StatusBadRequest)
+				return
+			}
+			pids = append(pids, objID)
+		}
+		allMatches = append(allMatches, pids)
+	}
+
+	matches, err := h.MatchService.CreateMatches(r.Context(), groupName, allMatches)
+	if err != nil {
+		http.Error(w, "Error creating matches: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, matches)
+}
+
+// POST /api/group/{name}/matches/{match_id}/cancel?password=SECRET
+func (h *MatchHandler) CancelMatch(w http.ResponseWriter, r *http.Request) {
+	groupName := chi.URLParam(r, "name")
+	matchIDStr := chi.URLParam(r, "match_id")
+
+	if !checkGroupPassword(w, r, h.GroupService, groupName) {
+		return
+	}
+
+	matchID, err := parseObjectID(matchIDStr)
+	if err != nil {
+		http.Error(w, "Invalid match ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.MatchService.CancelMatch(r.Context(), matchID); err != nil {
+		http.Error(w, "Error cancelling match: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "cancelled"})
+}
+
 // POST /api/group/{name}/matches/{match_id}/results?password=SECRET
 // Payload: { "score_team1": X, "score_team2": Y }
 func (h *MatchHandler) SubmitResults(w http.ResponseWriter, r *http.Request) {

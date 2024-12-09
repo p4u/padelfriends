@@ -290,7 +290,7 @@ func (s *MatchService) ListMatches(ctx context.Context, groupName string, page, 
 
 // SubmitResults updates the match detail with final scores.
 func (s *MatchService) SubmitResults(ctx context.Context, matchID primitive.ObjectID, scoreTeam1, scoreTeam2 int) error {
-	if scoreTeam1 < 0 || scoreTeam1 > 8 || scoreTeam2 < 0 || scoreTeam2 > 8 {
+	if scoreTeam1 < 0 || scoreTeam1 > 10 || scoreTeam2 < 0 || scoreTeam2 > 10 {
 		return errors.New("invalid scores")
 	}
 

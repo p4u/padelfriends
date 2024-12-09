@@ -1,23 +1,23 @@
 <template>
   <div class="space-y-4">
-    <h2 class="text-xl pixel-text">🎾 Create New Group</h2>
+    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">🎾 Create New Group</h2>
     <form @submit.prevent="handleSubmit" class="space-y-4">
       <input
         v-model="form.name"
         type="text"
         placeholder="Group Name"
-        class="retro-input w-full"
+        class="modern-input w-full text-gray-900 dark:text-white"
         required
       />
       <input
         v-model="form.password"
         type="password"
         placeholder="Password"
-        class="retro-input w-full"
+        class="modern-input w-full text-gray-900 dark:text-white"
         required
       />
-      <button type="submit" class="retro-button w-full">
-        🏸 Create Group
+      <button type="submit" class="modern-button w-full">
+        Create Group
       </button>
     </form>
   </div>

@@ -5,13 +5,13 @@
         v-model="newPlayerName"
         type="text"
         placeholder="Player Name"
-        class="retro-input flex-1"
+        class="modern-input flex-1"
         required
       />
-      <button type="submit" class="retro-button">Add Player</button>
+      <button type="submit" class="modern-button">Add Player</button>
     </form>
     <ul class="space-y-2">
-      <li v-for="player in players" :key="player.id" class="p-2 bg-gray-100 rounded">
+      <li v-for="player in players" :key="player.id" class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-center text-gray-900 dark:text-white font-medium">
         {{ player.name }}
       </li>
     </ul>

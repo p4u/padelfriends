@@ -65,11 +65,13 @@ func (s *GroupService) GetGroupByName(ctx context.Context, name string) (models.
 	return g, nil
 }
 
+type GroupDetails struct {
+	Name      string    `bson:"name" json:"name"`
+	CreatedAt time.Time `bson:"created_at" json:"created_at"`
+}
+
 // ListGroupDetails retrieves the name and creation time of all groups, sorted alphabetically by name.
-func (s *GroupService) ListGroups(ctx context.Context) ([]struct {
-	Name      string    `bson:"name"`
-	CreatedAt time.Time `bson:"created_at"`
-}, error) {
+func (s *GroupService) ListGroups(ctx context.Context) ([]*GroupDetails, error) {
 	groupsColl := s.db.Collection("groups")
 
 	// Query to fetch name and created_at fields, sorted by name
@@ -87,10 +89,7 @@ func (s *GroupService) ListGroups(ctx context.Context) ([]struct {
 	defer cursor.Close(ctx)
 
 	// Extract the relevant fields from the result
-	var groups []struct {
-		Name      string    `bson:"name"`
-		CreatedAt time.Time `bson:"created_at"`
-	}
+	var groups []*GroupDetails
 	if err := cursor.All(ctx, &groups); err != nil {
 		return nil, err
 	}

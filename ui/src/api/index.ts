@@ -37,7 +37,7 @@ api.interceptors.response.use(
 
 export const groupApi = {
   create: (name: string, password: string) => 
-    api.post('/group', JSON.stringify({ name, password })),
+    api.post('/group', { name, password }),
   
   list: () => api.get('/groups'),
   
@@ -45,20 +45,20 @@ export const groupApi = {
     api.get(`/group/byname/${name}`, { params: { password } }),
   
   addPlayer: (groupId: string, password: string, name: string) =>
-    api.post(`/group/${groupId}/players`, JSON.stringify({ name }), { params: { password } }),
+    api.post(`/group/${groupId}/players`, { name }, { params: { password } }),
   
   getPlayers: (groupId: string, password: string) =>
     api.get(`/group/${groupId}/players`, { params: { password } }),
   
   createMatch: (groupId: string, password: string, playerIds: string[]) =>
     api.post(`/group/${groupId}/matches`, 
-      JSON.stringify({ player_ids: playerIds }), 
+      { player_ids: playerIds }, 
       { params: { password } }
     ),
 
   createBatchMatches: (groupId: string, password: string, matches: string[][]) =>
     api.post(`/group/${groupId}/matches/batch`,
-      JSON.stringify({ matches }),
+      { matches },
       { params: { password } }
     ),
   
@@ -70,12 +70,21 @@ export const groupApi = {
 
   submitResults: (groupId: string, matchId: string, password: string, scoreTeam1: number, scoreTeam2: number) =>
     api.post(`/group/${groupId}/matches/${matchId}/results`, 
-      JSON.stringify({ score_team1: scoreTeam1, score_team2: scoreTeam2 }), 
+      { 
+        score_team1: parseInt(String(scoreTeam1)), 
+        score_team2: parseInt(String(scoreTeam2)) 
+      }, 
       { params: { password } }
     ),
   
-  getMatches: (groupId: string, password: string) =>
-    api.get(`/group/${groupId}/matches`, { params: { password } }),
+  getMatches: (groupId: string, password: string, page: number = 1, pageSize: number = 10) =>
+    api.get(`/group/${groupId}/matches`, { 
+      params: { 
+        password,
+        page,
+        pageSize
+      } 
+    }),
   
   getStatistics: (groupId: string, password: string) =>
     api.get(`/group/${groupId}/statistics`, { params: { password } }),

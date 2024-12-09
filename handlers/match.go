@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/p4u/padelfriends/services"
@@ -155,18 +156,37 @@ func (h *MatchHandler) SubmitResults(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
 }
 
-// GET /api/group/{name}/matches?password=SECRET
+// GET /api/group/{name}/matches?password=SECRET&page=1&pageSize=10
 func (h *MatchHandler) ListMatches(w http.ResponseWriter, r *http.Request) {
 	groupName := chi.URLParam(r, "name")
 	if !checkGroupPassword(w, r, h.GroupService, groupName) {
 		return
 	}
 
-	matches, err := h.MatchService.ListMatches(r.Context(), groupName)
+	// Get pagination parameters
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	pageSize, _ := strconv.Atoi(r.URL.Query().Get("pageSize"))
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+
+	matches, total, err := h.MatchService.ListMatches(r.Context(), groupName, page, pageSize)
 	if err != nil {
 		http.Error(w, "Error listing matches: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, matches)
+	response := map[string]interface{}{
+		"matches":    matches,
+		"total":      total,
+		"page":       page,
+		"pageSize":   pageSize,
+		"totalPages": (total + pageSize - 1) / pageSize,
+	}
+
+	writeJSON(w, http.StatusOK, response)
 }

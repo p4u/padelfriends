@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MatchService struct {
@@ -137,30 +138,43 @@ func (s *MatchService) CreateMatches(ctx context.Context, groupName string, matc
 	return responses, nil
 }
 
-// CancelMatch cancels a match
+// CancelMatch deletes a match and its details
 func (s *MatchService) CancelMatch(ctx context.Context, matchID primitive.ObjectID) error {
 	matchesColl := s.db.Collection("matches")
+	detailsColl := s.db.Collection("matchdetails")
 
-	result, err := matchesColl.UpdateOne(
-		ctx,
-		bson.M{
-			"_id":    matchID,
-			"status": "pending", // Only allow cancelling pending matches
-		},
-		bson.M{
-			"$set": bson.M{"status": "cancelled"},
-		},
-	)
-
+	// Start a session for the transaction
+	session, err := s.db.Client().StartSession()
 	if err != nil {
 		return err
 	}
+	defer session.EndSession(ctx)
 
-	if result.ModifiedCount == 0 {
-		return errors.New("match not found or already completed/cancelled")
-	}
+	// Run transaction
+	_, err = session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+		// Delete match details first
+		_, err := detailsColl.DeleteOne(sessCtx, bson.M{"match_id": matchID})
+		if err != nil {
+			return nil, err
+		}
 
-	return nil
+		// Delete the match
+		result, err := matchesColl.DeleteOne(sessCtx, bson.M{
+			"_id":    matchID,
+			"status": "pending", // Only allow deleting pending matches
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		if result.DeletedCount == 0 {
+			return nil, errors.New("match not found or already completed")
+		}
+
+		return nil, nil
+	})
+
+	return err
 }
 
 // SubmitResults updates the match detail with final scores.
@@ -211,20 +225,34 @@ func (s *MatchService) SubmitResults(ctx context.Context, matchID primitive.Obje
 }
 
 // ListMatches returns all matches for a group with player details.
-func (s *MatchService) ListMatches(ctx context.Context, groupName string) ([]models.MatchResponse, error) {
+func (s *MatchService) ListMatches(ctx context.Context, groupName string, page, pageSize int) ([]models.MatchResponse, int, error) {
 	matchesColl := s.db.Collection("matches")
 	detailsColl := s.db.Collection("matchdetails")
 
-	// Get all matches
-	cur, err := matchesColl.Find(ctx, bson.M{"group_name": groupName})
+	// Get total count
+	totalCount, err := matchesColl.CountDocuments(ctx, bson.M{"group_name": groupName})
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	// Calculate skip value
+	skip := (page - 1) * pageSize
+
+	// Get matches with pagination
+	findOptions := options.Find().
+		SetSort(bson.D{{Key: "timestamp", Value: -1}}).
+		SetSkip(int64(skip)).
+		SetLimit(int64(pageSize))
+
+	cur, err := matchesColl.Find(ctx, bson.M{"group_name": groupName}, findOptions)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer cur.Close(ctx)
 
 	var matches []models.Match
 	if err := cur.All(ctx, &matches); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	// Build response with details and player information
@@ -259,5 +287,5 @@ func (s *MatchService) ListMatches(ctx context.Context, groupName string) ([]mod
 		responses = append(responses, response)
 	}
 
-	return responses, nil
+	return responses, int(totalCount), nil
 }

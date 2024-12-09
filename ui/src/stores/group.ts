@@ -3,13 +3,6 @@ import { ref, markRaw } from 'vue';
 import type { Group, Player, Match, Statistics } from '../types';
 import { groupApi } from '../api';
 
-const STORAGE_KEY = 'padel-friends-group';
-
-interface StoredGroupData {
-  group: Group;
-  password: string;
-}
-
 export const useGroupStore = defineStore('group', () => {
   const currentGroup = ref<Group | null>(null);
   const players = ref<Player[]>([]);
@@ -23,7 +16,7 @@ export const useGroupStore = defineStore('group', () => {
     currentGroup.value = markRaw({ ...group });
     groupPassword.value = password;
     // Save to localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ group, password }));
+    localStorage.setItem('padel-friends-group', JSON.stringify({ group, password }));
   };
 
   const clearGroup = () => {
@@ -32,15 +25,15 @@ export const useGroupStore = defineStore('group', () => {
     players.value = [];
     matches.value = [];
     statistics.value = [];
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('padel-friends-group');
   };
 
   const restoreGroupFromStorage = async (): Promise<boolean> => {
-    const storedData = localStorage.getItem(STORAGE_KEY);
+    const storedData = localStorage.getItem('padel-friends-group');
     if (!storedData) return false;
 
     try {
-      const { group, password }: StoredGroupData = JSON.parse(storedData);
+      const { group, password } = JSON.parse(storedData);
       if (!group || !password) return false;
 
       // Verify the group still exists and password is valid
@@ -78,14 +71,14 @@ export const useGroupStore = defineStore('group', () => {
     }
   };
 
-  const loadMatches = async () => {
+  const loadMatches = async (page: number = 1, pageSize: number = 10) => {
     if (!currentGroup.value) return;
     loading.value = true;
     error.value = null;
     
     try {
-      const response = await groupApi.getMatches(currentGroup.value.name, groupPassword.value);
-      matches.value = Array.isArray(response.data) ? markRaw([...response.data]) : [];
+      const response = await groupApi.getMatches(currentGroup.value.name, groupPassword.value, page, pageSize);
+      matches.value = Array.isArray(response.data.matches) ? markRaw([...response.data.matches]) : [];
     } catch (err) {
       error.value = 'Failed to load matches';
       console.error('Failed to load matches:', err);

@@ -2,7 +2,7 @@
   <div class="max-w-4xl mx-auto space-y-8">
     <!-- Group Header -->
     <div class="modern-container bg-white dark:bg-gray-800">
-      <h1 class="text-4xl font-bold text-center text-gray-900 dark:text-white mb-8 border-b pb-4">
+      <h1 class="text-2xl font-bold mb-4 text-center text-gray-900 dark:text-white">
         {{ currentGroup?.name }}
       </h1>
       <div class="flex flex-wrap justify-center gap-2">
@@ -51,13 +51,13 @@ import type { Match } from '../types';
 const route = useRoute();
 const router = useRouter();
 const groupStore = useGroupStore();
-const activeTab = ref('players');
+const activeTab = ref('matches'); // Changed default tab to matches
 const loading = ref(false);
 const error = ref<string | null>(null);
 
 const tabs = [
+  { value: 'matches', label: 'Matches', icon: '🎾' },
   { value: 'players', label: 'Players', icon: '👥' },
-  { value: 'matches', label: 'Matches', icon: '🎯' },
   { value: 'statistics', label: 'Stats', icon: '📊' }
 ];
 
@@ -71,7 +71,7 @@ const currentComponent = computed(() => {
     case 'players': return PlayerList;
     case 'matches': return MatchList;
     case 'statistics': return StatisticsList;
-    default: return PlayerList;
+    default: return MatchList;
   }
 });
 
@@ -121,7 +121,7 @@ const addPlayer = async (name: string) => {
     );
     await groupStore.loadPlayers();
   } catch (error) {
-    alert('❌ Failed to add player');
+    alert('Failed to add player');
   }
 };
 
@@ -136,7 +136,7 @@ const createMatch = async (playerIds: string[]) => {
     );
     await groupStore.loadMatches();
   } catch (error) {
-    alert('❌ Failed to create match');
+    alert('Failed to create match');
   }
 };
 

@@ -58,7 +58,7 @@
 
       <!-- Tournament Generator -->
       <Tournament 
-        :players="players"
+        :players="players || []"
         @create-matches="handleRandomMatches"
       />
     </div>
@@ -71,7 +71,10 @@
         </div>
         
         <div class="p-6 space-y-4">
-          <div v-for="match in matches" :key="match.id" 
+          <div v-if="!matches?.length" class="text-center text-gray-500 dark:text-gray-400">
+            No matches yet
+          </div>
+          <div v-else v-for="match in sortedMatches" :key="match.id" 
                class="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 hover:shadow-md transition-shadow">
             <div class="space-y-4">
               <!-- Match Header -->
@@ -199,7 +202,22 @@ const pageSize = 10;
 const showScoreModal = ref(false);
 const selectedMatch = ref<Match | null>(null);
 
+const sortedMatches = computed(() => {
+  if (!props.matches) return [];
+  
+  return [...props.matches].sort((a, b) => {
+    // First sort by status (pending before completed)
+    if (a.status === 'pending' && b.status !== 'pending') return -1;
+    if (a.status !== 'pending' && b.status === 'pending') return 1;
+    
+    // Then sort by timestamp (newest first)
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  });
+});
+
 const availablePlayersForSelect = (teamIndex: number, playerIndex: number) => {
+  if (!props.players) return [];
+  
   return props.players.filter(player => {
     const selectedIds = selectedPlayers.value.flat().filter((id, idx) => {
       const currentTeamIndex = Math.floor(idx / 2);

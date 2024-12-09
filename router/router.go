@@ -25,6 +25,7 @@ func New(
 		r.Get("/groups", groupHandler.ListGroups)
 		r.Get("/group/{name}", groupHandler.GetGroupByName)
 		r.Get("/group/byname/{name}", groupHandler.GetGroupByName)
+		r.Post("/group", groupHandler.CreateGroup) // Added missing endpoint
 
 		r.Route("/group/{name}", func(r chi.Router) {
 			// Public endpoints (no auth required)

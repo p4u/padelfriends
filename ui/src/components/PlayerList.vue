@@ -20,7 +20,10 @@
     </form>
 
     <!-- Players List - Always visible -->
-    <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+    <div v-if="!sortedPlayers.length" class="text-center text-gray-500 dark:text-gray-400">
+      No players yet
+    </div>
+    <div v-else class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
       <div v-for="player in sortedPlayers" 
            :key="player.id" 
            class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow p-4">
@@ -49,6 +52,7 @@ defineEmits<{
 }>();
 
 const sortedPlayers = computed(() => {
+  if (!props.players) return [];
   return [...props.players].sort((a, b) => a.name.localeCompare(b.name));
 });
 </script>

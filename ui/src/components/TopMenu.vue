@@ -6,17 +6,43 @@
           <img src="/icons/icon-192x192.png" alt="Padel Friends Logo" class="h-10 w-10" />
           <span class="text-xl font-bold text-gray-900 dark:text-white">padelfriends.xyz</span>
         </div>
-        <router-link 
-          to="/" 
-          class="px-4 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 transition-colors"
-        >
-          Home
-        </router-link>
+        <div class="flex items-center space-x-2">
+          <button 
+            @click="refreshPage"
+            class="px-4 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 transition-colors"
+          >
+            🔄 Refresh
+          </button>
+          <router-link 
+            to="/" 
+            class="px-4 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 transition-colors"
+          >
+            Home
+          </router-link>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// TopMenu component
+import { useRouter } from 'vue-router';
+import { useGroupStore } from '../stores/group';
+
+const router = useRouter();
+const groupStore = useGroupStore();
+
+const refreshPage = async () => {
+  if (router.currentRoute.value.path.startsWith('/group/')) {
+    // Reload group data
+    await Promise.all([
+      groupStore.loadPlayers(),
+      groupStore.loadMatches(),
+      groupStore.loadStatistics()
+    ]);
+  } else {
+    // For other pages, just reload the current route
+    router.go(0);
+  }
+};
 </script>

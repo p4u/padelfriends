@@ -103,6 +103,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useGroupStore } from '../stores/group';
+import { useSavedGroupsStore } from '../stores/savedGroups';
 import { groupApi } from '../api';
 import { PlayerList, MatchList, StatisticsList } from '../components';
 import type { Match } from '../types';
@@ -110,6 +111,7 @@ import type { Match } from '../types';
 const route = useRoute();
 const router = useRouter();
 const groupStore = useGroupStore();
+const savedGroupsStore = useSavedGroupsStore();
 const activeTab = ref('matches');
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -152,11 +154,17 @@ const showAuthDialog = () => {
 };
 
 const authenticate = async () => {
-  if (!password.value) return;
+  if (!password.value || !currentGroup.value) return;
   
   const success = await groupStore.authenticate(password.value);
   if (success) {
     showingAuthDialog.value = false;
+    // Save to recent groups after successful authentication
+    savedGroupsStore.addGroup(
+      currentGroup.value.name, // Use name as id for consistency
+      currentGroup.value.name,
+      password.value
+    );
     await loadGroupData();
   } else {
     alert('Invalid password');

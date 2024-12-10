@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-8">
+  <div class="space-y-6">
     <!-- Stats Tabs -->
     <div class="flex justify-center space-x-4">
       <button 
@@ -7,7 +7,7 @@
         :key="tab.value"
         @click="activeTab = tab.value"
         :class="[
-          'px-6 py-3 rounded-lg font-bold transition-all',
+          'px-4 py-2 rounded-lg font-bold transition-all',
           activeTab === tab.value 
             ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg' 
             : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -18,12 +18,15 @@
     </div>
 
     <!-- Stats Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden min-h-[400px]">
+      <div v-if="!statistics?.length" class="flex items-center justify-center h-[400px] text-gray-500 dark:text-gray-400">
+        No statistics available
+      </div>
+      <div v-else class="overflow-x-auto">
+        <table class="w-full table-fixed">
           <thead>
             <tr class="bg-gray-50 dark:bg-gray-700">
-              <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <th class="w-1/3 px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">
                 Player
               </th>
               <template v-if="activeTab === 'sets'">
@@ -31,14 +34,12 @@
                   v-for="col in setColumns" 
                   :key="col.key"
                   @click="sortBy(col.key)"
-                  class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                  class="w-[22%] px-2 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                 >
-                  <div class="flex items-center space-x-1">
-                    <span>{{ col.label }}</span>
-                    <span v-if="sortKey === col.key" class="text-blue-500">
-                      {{ sortOrder === 'asc' ? '↑' : '↓' }}
-                    </span>
-                  </div>
+                  {{ col.label }}
+                  <span v-if="sortKey === col.key" class="text-blue-500 ml-1">
+                    {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                  </span>
                 </th>
               </template>
               <template v-else>
@@ -46,14 +47,12 @@
                   v-for="col in pointColumns" 
                   :key="col.key"
                   @click="sortBy(col.key)"
-                  class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                  class="w-[22%] px-2 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                 >
-                  <div class="flex items-center space-x-1">
-                    <span>{{ col.label }}</span>
-                    <span v-if="sortKey === col.key" class="text-blue-500">
-                      {{ sortOrder === 'asc' ? '↑' : '↓' }}
-                    </span>
-                  </div>
+                  {{ col.label }}
+                  <span v-if="sortKey === col.key" class="text-blue-500 ml-1">
+                    {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                  </span>
                 </th>
               </template>
             </tr>
@@ -67,11 +66,11 @@
                 index < 3 ? 'font-semibold' : ''
               ]"
             >
-              <td class="px-6 py-4">
-                <div class="flex items-center space-x-2">
-                  <span v-if="index === 0" class="text-2xl">🏆</span>
-                  <span v-else-if="index === 1" class="text-2xl">🥈</span>
-                  <span v-else-if="index === 2" class="text-2xl">🥉</span>
+              <td class="px-2 py-2 truncate">
+                <div class="flex items-center gap-1">
+                  <span v-if="index === 0" class="text-lg">🏆</span>
+                  <span v-else-if="index === 1" class="text-lg">🥈</span>
+                  <span v-else-if="index === 2" class="text-lg">🥉</span>
                   <span :class="index < 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'">
                     {{ stat.player_name }}
                   </span>
@@ -81,7 +80,7 @@
                 <td 
                   v-for="col in setColumns" 
                   :key="col.key"
-                  class="px-6 py-4 text-gray-900 dark:text-white"
+                  class="px-2 py-2 text-center text-sm"
                 >
                   <span :class="getValueClass(stat[col.key], col.key)">
                     {{ formatValue(stat[col.key], col.key) }}
@@ -92,7 +91,7 @@
                 <td 
                   v-for="col in pointColumns" 
                   :key="col.key"
-                  class="px-6 py-4 text-gray-900 dark:text-white"
+                  class="px-2 py-2 text-center text-sm"
                 >
                   <span :class="getValueClass(stat[col.key], col.key)">
                     {{ formatValue(stat[col.key], col.key) }}
@@ -125,22 +124,20 @@ const tabs = [
 ];
 
 const setColumns = [
-  { key: 'total_games', label: 'Sets' },
-  { key: 'games_won', label: 'Wins' },
-  { key: 'game_win_rate', label: 'Win %' },
-  { key: 'games_lost', label: 'Losses' },
-  { key: 'game_loss_rate', label: 'Loss %' }
+  { key: 'games_won', label: 'W' },
+  { key: 'games_lost', label: 'L' },
+  { key: 'game_win_rate', label: 'W%' }
 ];
 
 const pointColumns = [
-  { key: 'total_points', label: 'Points' },
-  { key: 'points_won', label: 'Won' },
-  { key: 'point_win_rate', label: 'Win %' },
-  { key: 'points_lost', label: 'Lost' },
-  { key: 'point_loss_rate', label: 'Loss %' }
+  { key: 'points_won', label: 'W' },
+  { key: 'points_lost', label: 'L' },
+  { key: 'point_win_rate', label: 'W%' }
 ];
 
 const sortedStats = computed(() => {
+  if (!props.statistics?.length) return [];
+  
   return [...props.statistics].sort((a, b) => {
     const aValue = a[sortKey.value];
     const bValue = b[sortKey.value];
@@ -163,17 +160,17 @@ const sortBy = (key: string) => {
 
 const formatValue = (value: number, key: string) => {
   if (key.includes('rate')) {
-    return `${value.toFixed(1)}%`;
+    return `${value.toFixed(0)}%`;
   }
   return value;
 };
 
 const getValueClass = (value: number, key: string) => {
   if (key.includes('lost')) {
-    return 'text-red-600 dark:text-red-400';
+    return 'text-red-600 dark:text-red-400 font-semibold';
   }
   if (!key.includes('rate') && !key.includes('total') && !key.includes('lost')) {
-    return value > 0 ? 'text-green-600 dark:text-green-400' : '';
+    return value > 0 ? 'text-green-600 dark:text-green-400 font-semibold' : '';
   }
   return '';
 };

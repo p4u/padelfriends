@@ -12,15 +12,19 @@ export const useSavedGroupsStore = defineStore('savedGroups', () => {
   const savedGroups = useLocalStorage<SavedGroup[]>('padel-friends-groups', []);
 
   const addGroup = (id: string, name: string, password: string) => {
-    const group = {
-      id,
-      name,
-      password,
-      lastAccessed: new Date().toISOString()
-    };
+    // Remove any existing group with same id or name
+    const filtered = savedGroups.value.filter(g => g.id !== id && g.name !== name);
 
-    const newGroups = savedGroups.value.filter(g => g.id !== id);
-    savedGroups.value = [...newGroups, group];
+    // Add new group at the start
+    savedGroups.value = [
+      {
+        id,
+        name,
+        password,
+        lastAccessed: new Date().toISOString()
+      },
+      ...filtered
+    ];
   };
 
   const removeGroup = (id: string) => {
@@ -29,13 +33,13 @@ export const useSavedGroupsStore = defineStore('savedGroups', () => {
 
   const getGroupPassword = (id: string) => {
     const group = savedGroups.value.find(g => g.id === id);
-    return group?.password;
+    return group?.password || null;
   };
 
   return {
     savedGroups,
     addGroup,
     removeGroup,
-    getGroupPassword,
+    getGroupPassword
   };
 });

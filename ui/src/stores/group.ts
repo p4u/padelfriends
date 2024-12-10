@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { groupApi } from '../api';
+import { useSavedGroupsStore } from './savedGroups';
 import type { Group, Player, Match, Statistics } from '../types';
 
 export const useGroupStore = defineStore('group', () => {
@@ -10,6 +11,7 @@ export const useGroupStore = defineStore('group', () => {
   const players = ref<Player[]>([]);
   const matches = ref<Match[]>([]);
   const statistics = ref<Statistics | null>(null);
+  const savedGroupsStore = useSavedGroupsStore();
 
   const hasGroup = computed(() => currentGroup.value !== null);
 
@@ -18,13 +20,12 @@ export const useGroupStore = defineStore('group', () => {
     if (password) {
       groupPassword.value = password;
       isAuthenticated.value = true;
-      localStorage.setItem('groupName', group.name);
-      localStorage.setItem('groupPassword', password);
+      savedGroupsStore.addGroup(group.name, group.name, password);
     } else {
-      // Try to restore password from localStorage
-      const storedPassword = localStorage.getItem('groupPassword');
-      if (storedPassword && localStorage.getItem('groupName') === group.name) {
-        groupPassword.value = storedPassword;
+      // Try to restore password from saved groups
+      const savedPassword = savedGroupsStore.getGroupPassword(group.name);
+      if (savedPassword) {
+        groupPassword.value = savedPassword;
         isAuthenticated.value = true;
       } else {
         groupPassword.value = '';
@@ -41,8 +42,7 @@ export const useGroupStore = defineStore('group', () => {
       if (response.data.isAuthenticated) {
         groupPassword.value = password;
         isAuthenticated.value = true;
-        localStorage.setItem('groupName', currentGroup.value.name);
-        localStorage.setItem('groupPassword', password);
+        savedGroupsStore.addGroup(currentGroup.value.name, currentGroup.value.name, password);
         return true;
       }
     } catch (error) {
@@ -53,16 +53,13 @@ export const useGroupStore = defineStore('group', () => {
 
   async function loadGroup(name: string) {
     try {
-      // Try to restore password from localStorage
-      const storedPassword = localStorage.getItem('groupPassword');
-      const storedGroupName = localStorage.getItem('groupName');
-      
       const response = await groupApi.getByName(name);
       currentGroup.value = response.data;
       
-      // If we have a stored password for this group, restore it
-      if (storedPassword && storedGroupName === name) {
-        groupPassword.value = storedPassword;
+      // Try to restore password from saved groups
+      const savedPassword = savedGroupsStore.getGroupPassword(name);
+      if (savedPassword) {
+        groupPassword.value = savedPassword;
         isAuthenticated.value = true;
       }
       
@@ -74,23 +71,25 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function restoreGroupFromStorage() {
-    const name = localStorage.getItem('groupName');
-    if (name) {
-      const success = await loadGroup(name);
+    const savedGroups = savedGroupsStore.savedGroups;
+    if (savedGroups && savedGroups.length > 0) {
+      const mostRecent = savedGroups[0] as { name: string };
+      const success = await loadGroup(mostRecent.name);
       return success;
     }
     return false;
   }
 
   async function clearGroup() {
+    if (currentGroup.value?.name) {
+      savedGroupsStore.removeGroup(currentGroup.value.name);
+    }
     currentGroup.value = null;
     groupPassword.value = '';
     isAuthenticated.value = false;
     players.value = [];
     matches.value = [];
     statistics.value = null;
-    localStorage.removeItem('groupName');
-    localStorage.removeItem('groupPassword');
   }
 
   async function loadPlayers() {

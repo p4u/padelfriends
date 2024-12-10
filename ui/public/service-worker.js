@@ -35,15 +35,21 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Check if URL scheme is supported for caching
+function isCacheableRequest(request) {
+  const url = new URL(request.url);
+  return ['http:', 'https:'].includes(url.protocol);
+}
+
 // Network-first strategy for API requests
 async function handleAPIRequest(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && isCacheableRequest(request)) {
       const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-      return response;
+      await cache.put(request, response.clone());
     }
+    return response;
   } catch (error) {
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
@@ -55,22 +61,38 @@ async function handleAPIRequest(request) {
 
 // Cache-first strategy for static assets
 async function handleStaticRequest(request) {
+  // Skip caching for unsupported schemes
+  if (!isCacheableRequest(request)) {
+    return fetch(request);
+  }
+
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
     return cachedResponse;
   }
-  const response = await fetch(request);
-  if (response.ok) {
-    const cache = await caches.open(CACHE_NAME);
-    cache.put(request, response.clone());
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    // If fetch fails and we don't have a cached response, rethrow
+    throw error;
   }
-  return response;
 }
 
 // Handle fetch events
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   // Handle API requests
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(handleAPIRequest(event.request));

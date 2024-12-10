@@ -13,23 +13,25 @@
       </div>
       
       <!-- Recent Groups -->
-      <div v-if="savedGroups.length > 0" class="space-y-4">
-        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Recent Groups</h2>
+      <div v-if="savedGroups.length > 0" class="modern-container min-h-[200px]">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white text-center mb-6">Recent Groups</h2>
         <div class="grid gap-4 sm:grid-cols-2">
           <div 
             v-for="group in savedGroups" 
             :key="group.id"
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer p-4"
+            class="bg-gray-50 dark:bg-gray-700 rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer p-4"
             @click="joinSavedGroup(group)"
           >
             <div class="flex justify-between items-center">
               <div class="flex items-center space-x-3">
                 <span class="text-2xl">🎾</span>
-                <span class="font-semibold text-gray-900 dark:text-white">{{ group.name }}</span>
+                <span class="font-semibold text-gray-900 dark:text-white transition-colors duration-200 hover:text-blue-600 dark:hover:text-blue-400">
+                  {{ group.name }}
+                </span>
               </div>
               <button 
                 class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-2"
-                @click.stop="removeGroup(group.id)"
+                @click.stop="removeGroup(group)"
               >
                 ❌
               </button>
@@ -39,25 +41,27 @@
       </div>
 
       <!-- Available Groups -->
-      <div v-if="filteredGroups.length > 0" class="space-y-4">
-        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Available Groups</h2>
+      <div v-if="filteredGroups.length > 0" class="modern-container min-h-[200px]">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white text-center mb-6">Available Groups</h2>
         <div class="grid gap-4 sm:grid-cols-2">
           <div 
             v-for="group in filteredGroups" 
             :key="group.id"
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer p-4"
+            class="bg-gray-50 dark:bg-gray-700 rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer p-4"
             @click="joinGroup(group)"
           >
             <div class="flex items-center space-x-3">
               <span class="text-2xl">🎯</span>
-              <span class="font-semibold text-gray-900 dark:text-white">{{ group.name }}</span>
+              <span class="font-semibold text-gray-900 dark:text-white transition-colors duration-200 hover:text-blue-600 dark:hover:text-blue-400">
+                {{ group.name }}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Register Group Form -->
-      <div class="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl shadow-lg p-6">
+      <div class="modern-container min-h-[200px] bg-gradient-to-r from-blue-500 to-indigo-500">
         <div class="text-center mb-6">
           <h2 class="text-2xl font-bold text-white">Register a new group</h2>
           <p class="text-white/80 mt-2">for casual play, a tournament or a league, it's free!</p>
@@ -77,7 +81,7 @@
             class="modern-input w-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
             required
           />
-          <button type="submit" class="modern-button w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold">
+          <button type="submit" class="modern-button w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold hover:from-green-600 hover:to-emerald-600 transition-all duration-200">
             🎮 Create Group
           </button>
         </form>
@@ -114,21 +118,16 @@ const filteredGroups = computed(() => {
 onMounted(async () => {
   try {
     const response = await groupApi.list();
-    console.log('Raw API response:', response);
-    
     if (Array.isArray(response.data)) {
       groups.value = response.data.map(group => ({
-        id: group.id,
+        id: group.id || group.name, // Fallback to name if id is not available
         name: group.name,
         created_at: group.created_at
       }));
-      console.log('Processed groups:', groups.value);
     } else {
-      console.error('Unexpected API response format:', response.data);
       error.value = 'Invalid data format received from server';
     }
   } catch (err) {
-    console.error('Error fetching groups:', err);
     error.value = typeof err === 'string' ? err : 'Failed to fetch groups';
   } finally {
     loading.value = false;
@@ -147,7 +146,6 @@ const joinGroup = async (group: Group) => {
     await groupStore.setGroup(joinedGroup);
     router.push(`/group/${joinedGroup.name}`);
   } catch (err) {
-    console.error('Error joining group:', err);
     alert('Failed to join group');
   }
 };
@@ -157,31 +155,29 @@ const createGroup = async () => {
     const response = await groupApi.create(form.value.name, form.value.password);
     const group = response.data;
     await groupStore.setGroup(group, form.value.password);
-    savedGroupsStore.addGroup(group.name, group.name, form.value.password);
+    // Use group.id if available, otherwise use name
+    savedGroupsStore.addGroup(group.id || group.name, group.name, form.value.password);
     router.push(`/group/${group.name}`);
-    console.log('✅ Group created:', group);
   } catch (err) {
-    console.error('Error creating group:', err);
     alert('Failed to create group. Please try again.');
   }
 };
 
-const joinSavedGroup = async (group: { name: string, password: string }) => {
+const joinSavedGroup = async (group: { id: string, name: string, password: string }) => {
   try {
     const response = await groupApi.getByName(group.name);
     const joinedGroup = response.data;
     await groupStore.setGroup(joinedGroup, group.password);
     router.push(`/group/${group.name}`);
   } catch (err) {
-    console.error('Error joining saved group:', err);
     alert('Failed to join group. The group may no longer exist.');
-    savedGroupsStore.removeGroup(group.name);
+    savedGroupsStore.removeGroup(group.id);
   }
 };
 
-const removeGroup = (name: string) => {
+const removeGroup = (group: { id: string, name: string }) => {
   if (confirm('Are you sure you want to remove this group from your recent list?')) {
-    savedGroupsStore.removeGroup(name);
+    savedGroupsStore.removeGroup(group.id);
   }
 };
 </script>
